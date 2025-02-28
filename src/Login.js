@@ -1,21 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useContext } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "./firebase";
-import { useNavigate } from "react-router-dom"; // Import the useNavigate hook
-import { Link } from "react-router-dom"; // Import Link from react-router-dom
+import { auth, db } from "./firebase";
+import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { ref, get } from "firebase/database";
+import { AuthContext } from "./AuthContext";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const navigate = useNavigate(); // Initialize useNavigate hook
-
-  // Redirect to dashboard if already logged in
-  useEffect(() => {
-    if (auth.currentUser) {
-      navigate("/dashboard"); // If logged in, redirect to dashboard
-    }
-  }, [navigate]);
+  const navigate = useNavigate();
+  const { setRole } = useContext(AuthContext); // Get setRole from context
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -24,9 +20,36 @@ const Login = () => {
       const user = userCredential.user;
 
       if (user.emailVerified) {
-        // Proceed with login and navigate to the dashboard
         console.log("Login successful");
-        navigate("/dashboard"); // Redirect to the dashboard page
+
+        // Fetch all users from the database
+        const usersRef = ref(db, "users");
+        const snapshot = await get(usersRef);
+
+        if (snapshot.exists()) {
+          const usersData = snapshot.val();
+
+          // Find the user by email
+          const foundUser = Object.values(usersData).find(
+            (u) => u.email === user.email
+          );
+
+          if (foundUser) {
+            setRole(foundUser.role); // Set role in context
+            console.log("User Role:", foundUser.role);
+
+            // Navigate based on role
+            if (foundUser.role === "admin") {
+              navigate("/admin");
+            } else {
+              navigate("/dashboard");
+            }
+          } else {
+            setError("User role not found.");
+          }
+        } else {
+          setError("User not found in database.");
+        }
       } else {
         setError("Please verify your email before logging in.");
       }
