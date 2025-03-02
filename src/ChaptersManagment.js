@@ -4,13 +4,27 @@ import { onValue, update, push, remove } from "firebase/database";
 
 const AdminChapters = () => {
   const [chapters, setChapters] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [activeCourse, setActiveCourse] = useState("AS"); // Default active course
   const [newChapterName, setNewChapterName] = useState("");
 
-  // Fetch chapters from Firebase
+  // Fetch courses from Firebase
   useEffect(() => {
-    const chaptersRef = ref(db, "chapters");
+    const coursesRef = ref(db, "courses");
+    const unsubscribeCourses = onValue(coursesRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const coursesData = Object.keys(snapshot.val());
+        setCourses(coursesData);
+      }
+    });
 
-    const unsubscribe = onValue(chaptersRef, (snapshot) => {
+    return () => unsubscribeCourses();
+  }, []);
+
+  // Fetch chapters for the active course from Firebase
+  useEffect(() => {
+    const chaptersRef = ref(db, `courses/${activeCourse}/chapters`);
+    const unsubscribeChapters = onValue(chaptersRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.val();
         const chaptersArray = Object.keys(data).map((key) => ({
@@ -18,16 +32,18 @@ const AdminChapters = () => {
           ...data[key],
         }));
         setChapters(chaptersArray);
+      } else {
+        setChapters([]); // Reset chapters if no data exists
       }
     });
 
-    return () => unsubscribe();
-  }, []);
+    return () => unsubscribeChapters();
+  }, [activeCourse]);
 
   // Toggle completion status
   const handleCheckboxChange = async (id, done) => {
     try {
-      await update(ref(db, `chapters/${id}`), { done: !done });
+      await update(ref(db, `courses/${activeCourse}/chapters/${id}`), { done: !done });
       setChapters((prevChapters) =>
         prevChapters.map((chapter) =>
           chapter.id === id ? { ...chapter, done: !done } : chapter
@@ -43,7 +59,7 @@ const AdminChapters = () => {
     if (!newChapterName.trim()) return;
 
     try {
-      const chaptersRef = ref(db, "chapters");
+      const chaptersRef = ref(db, `courses/${activeCourse}/chapters`);
       const newChapterRef = push(chaptersRef);
       await update(newChapterRef, { name: newChapterName, done: false });
 
@@ -56,7 +72,7 @@ const AdminChapters = () => {
   // Delete chapter
   const handleDeleteChapter = async (id) => {
     try {
-      await remove(ref(db, `chapters/${id}`));
+      await remove(ref(db, `courses/${activeCourse}/chapters/${id}`));
       setChapters((prevChapters) => prevChapters.filter((chapter) => chapter.id !== id));
     } catch (error) {
       console.error("Error deleting chapter:", error);
@@ -65,7 +81,20 @@ const AdminChapters = () => {
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Chapters</h2>
+      <h2 className="text-2xl font-bold mb-4">Chapters Management</h2>
+
+      {/* Course Tabs */}
+      <div className="flex space-x-4 mb-6">
+        {courses.map((course) => (
+          <button
+            key={course}
+            className={`p-2 ${activeCourse === course ? "bg-blue-600" : "bg-gray-600"} rounded-md text-white`}
+            onClick={() => setActiveCourse(course)}
+          >
+            {course}
+          </button>
+        ))}
+      </div>
 
       {/* Add Chapter */}
       <div className="mb-4 flex gap-2">

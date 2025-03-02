@@ -3,14 +3,29 @@ import { db, ref, onValue, set, remove, push } from "./firebase";
 
 const AdminVideos = () => {
   const [videos, setVideos] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [activeCourse, setActiveCourse] = useState("AS"); // Default active course
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [editingId, setEditingId] = useState(null);
 
-  // Fetch videos from Firebase
+  // Fetch courses from Firebase
   useEffect(() => {
-    const videosRef = ref(db, "videos");
-    const unsubscribe = onValue(videosRef, (snapshot) => {
+    const coursesRef = ref(db, "courses");
+    const unsubscribeCourses = onValue(coursesRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const coursesData = Object.keys(snapshot.val());
+        setCourses(coursesData);
+      }
+    });
+
+    return () => unsubscribeCourses();
+  }, []);
+
+  // Fetch videos for the active course from Firebase
+  useEffect(() => {
+    const videosRef = ref(db, `courses/${activeCourse}/videos`);
+    const unsubscribeVideos = onValue(videosRef, (snapshot) => {
       if (snapshot.exists()) {
         const videoData = snapshot.val();
         const videoList = Object.keys(videoData).map((key) => ({
@@ -19,12 +34,12 @@ const AdminVideos = () => {
         }));
         setVideos(videoList);
       } else {
-        setVideos([]);
+        setVideos([]); // Reset videos if no data exists
       }
     });
 
-    return () => unsubscribe();
-  }, []);
+    return () => unsubscribeVideos();
+  }, [activeCourse]);
 
   // Add or Update Video
   const handleSubmit = (e) => {
@@ -33,11 +48,11 @@ const AdminVideos = () => {
 
     if (editingId) {
       // Update existing video
-      set(ref(db, `videos/${editingId}`), { title, url });
+      set(ref(db, `courses/${activeCourse}/videos/${editingId}`), { title, url });
       setEditingId(null);
     } else {
       // Add new video
-      const newVideoRef = push(ref(db, "videos"));
+      const newVideoRef = push(ref(db, `courses/${activeCourse}/videos`));
       set(newVideoRef, { title, url });
     }
 
@@ -56,13 +71,26 @@ const AdminVideos = () => {
   // Delete Video
   const handleDelete = (id) => {
     if (window.confirm("Are you sure you want to delete this video?")) {
-      remove(ref(db, `videos/${id}`));
+      remove(ref(db, `courses/${activeCourse}/videos/${id}`));
     }
   };
 
   return (
     <div>
       <h1 className="text-3xl font-bold text-white mb-6">Manage Videos</h1>
+
+      {/* Course Tabs */}
+      <div className="flex space-x-4 mb-6">
+        {courses.map((course) => (
+          <button
+            key={course}
+            className={`p-2 ${activeCourse === course ? "bg-blue-600" : "bg-gray-600"} rounded-md text-white`}
+            onClick={() => setActiveCourse(course)}
+          >
+            {course}
+          </button>
+        ))}
+      </div>
 
       {/* Video Form */}
       <form onSubmit={handleSubmit} className="bg-white p-6 shadow-lg rounded-lg mb-6">
@@ -74,14 +102,14 @@ const AdminVideos = () => {
           placeholder="Video Title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full p-2 border rounded mb-3"
+          className="w-full text-black p-2 border rounded mb-3"
         />
         <input
           type="text"
           placeholder="YouTube Embed URL"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          className="w-full p-2 border rounded mb-3"
+          className="w-full text-black p-2 border rounded mb-3"
         />
         <button
           type="submit"

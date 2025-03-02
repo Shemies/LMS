@@ -3,26 +3,43 @@ import { db, ref, set, push, onValue, remove } from "./firebase";
 
 const AdminMarkSchemes = () => {
   const [markSchemes, setMarkSchemes] = useState({});
+  const [courses, setCourses] = useState([]);
+  const [activeCourse, setActiveCourse] = useState("AS"); // Default active course
   const [chapter, setChapter] = useState("");
   const [pdfName, setPdfName] = useState("");
   const [pdfUrl, setPdfUrl] = useState("");
 
-  // Fetch PDFs from Firebase
+  // Fetch courses from Firebase
   useEffect(() => {
-    const markSchemesRef = ref(db, "markschemes");
-    onValue(markSchemesRef, (snapshot) => {
+    const coursesRef = ref(db, "courses");
+    const unsubscribeCourses = onValue(coursesRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const coursesData = Object.keys(snapshot.val());
+        setCourses(coursesData);
+      }
+    });
+
+    return () => unsubscribeCourses();
+  }, []);
+
+  // Fetch mark schemes for the active course from Firebase
+  useEffect(() => {
+    const markSchemesRef = ref(db, `courses/${activeCourse}/markschemes`);
+    const unsubscribeMarkSchemes = onValue(markSchemesRef, (snapshot) => {
       if (snapshot.exists()) {
         setMarkSchemes(snapshot.val());
       } else {
         setMarkSchemes({});
       }
     });
-  }, []);
+
+    return () => unsubscribeMarkSchemes();
+  }, [activeCourse]);
 
   // Add new PDF
   const handleAddPdf = () => {
     if (chapter && pdfName && pdfUrl) {
-      const chapterRef = ref(db, `markschemes/${chapter}`);
+      const chapterRef = ref(db, `courses/${activeCourse}/markschemes/${chapter}`);
       push(chapterRef, { name: pdfName, url: pdfUrl });
 
       setPdfName("");
@@ -32,13 +49,26 @@ const AdminMarkSchemes = () => {
 
   // Delete a PDF
   const handleDeletePdf = (chapter, pdfKey) => {
-    const pdfRef = ref(db, `markschemes/${chapter}/${pdfKey}`);
+    const pdfRef = ref(db, `courses/${activeCourse}/markschemes/${chapter}/${pdfKey}`);
     remove(pdfRef);
   };
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-white mb-6">MarkSchemes</h1>
+      <h1 className="text-3xl font-bold text-white mb-6">Mark Schemes</h1>
+
+      {/* Course Tabs */}
+      <div className="flex space-x-4 mb-6">
+        {courses.map((course) => (
+          <button
+            key={course}
+            className={`p-2 ${activeCourse === course ? "bg-blue-600" : "bg-gray-600"} rounded-md text-white`}
+            onClick={() => setActiveCourse(course)}
+          >
+            {course}
+          </button>
+        ))}
+      </div>
 
       {/* Form to Add PDFs */}
       <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 w-[80%] mx-auto mb-6">

@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X } from "lucide-react"; // Icons for menu toggle
+import {
+  Menu,
+  X,
+  LayoutDashboard,
+  Check,
+  Video,
+  FileText,
+  ClipboardList,
+  BookOpen,
+  File,
+} from "lucide-react"; // Icons for menu and profile
 import logo from "./assets/lms-logo.png"; // Ensure the logo is in src/assets/
 import { auth, db, ref, onValue, query, orderByChild, equalTo } from "./firebase"; // Import Firebase Auth
 import { onAuthStateChanged } from "firebase/auth"; // Import auth state listener
@@ -56,20 +66,21 @@ const Layout = ({ children }) => {
         </div>
         <ul className="space-y-3">
           {[
-            { name: "Dashboard", path: "/dashboard" },
-            { name: "Chapters", path: "/chapters" },
-            { name: "Videos", path: "/videos" },
-            { name: "Mark Schemes", path: "/markschemes" },
-            { name: "Homeworks", path: "/homeworks" },
-            { name: "Exams", path: "/exams" },
-            { name: "Past Papers", path: "/pastpapers" },
+            { name: "Dashboard", path: "/dashboard", icon: <LayoutDashboard size={20} /> },
+            { name: "Chapters", path: "/chapters", icon: <Check size={20} /> },
+            { name: "Videos", path: "/videos", icon: <Video size={20} /> },
+            { name: "Mark Schemes", path: "/markschemes", icon: <FileText size={20} /> },
+            { name: "Homeworks", path: "/homeworks", icon: <ClipboardList size={20} /> },
+            { name: "Exams", path: "/exams", icon: <BookOpen size={20} /> },
+            { name: "Past Papers", path: "/pastpapers", icon: <File size={20} /> },
           ].map((item) => (
             <li key={item.name}>
               <Link
                 to={item.path}
-                className="block w-full p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition duration-200"
+                className="flex items-center w-full p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition duration-200"
                 onClick={() => setSidebarOpen(false)} // Close sidebar on mobile click
               >
+                <span className="mr-3">{item.icon}</span>
                 {item.name}
               </Link>
             </li>
@@ -89,9 +100,21 @@ const Layout = ({ children }) => {
             <Menu size={24} />
           </button>
           <img src={logo} alt="LMS Logo" className="h-8 md:hidden lg:hidden" />
-          <Link to="/profile" className="text-lg ml-auto font-semibold cursor-pointer hover:underline">
-            {username} ({studentId})
-          </Link>
+          {/* Profile Section - Aligned to the Right */}
+          <div className="flex items-center space-x-3 ml-auto">
+            <Link
+              to="/profile"
+              className="flex items-center space-x-3 cursor-pointer hover:underline"
+            >
+              {/* Profile Icon with Initial */}
+              <div className="w-8 h-8 bg-gray-200 text-black capitalize rounded-full flex items-center justify-center text-sm font-bold">
+                {username.charAt(0)}
+              </div>
+              <span className="text-lg capitalize font-semibold">
+                {username} ({studentId})
+              </span>
+            </Link>
+          </div>
         </div>
 
         {/* Page Content with Top Padding (to avoid overlapping) */}

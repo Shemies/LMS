@@ -1,176 +1,166 @@
 import React, { useState, useEffect } from "react";
-import { db, ref, push, onValue, remove, update, off } from "./firebase";
+import { db, ref, onValue } from "./firebase";
 
 const AdminExamGrades = () => {
-  const [exams, setExams] = useState({});
+  const [users, setUsers] = useState([]);
+  const [courses, setCourses] = useState({}); // Grouped by course and exam
+  const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedExam, setSelectedExam] = useState(null);
-  const [students, setStudents] = useState([]);
   const [schoolFilter, setSchoolFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [newExamName, setNewExamName] = useState("");
-  const [newStudent, setNewStudent] = useState({
-    studentId: "",
-    studentName: "",
-    mark: "",
-    grade: "",
-    school: "",
-  });
+  const [searchById, setSearchById] = useState(""); // New state for searching by student ID
 
-  // Fetch all exams from database
+  // Fetch all users and their exam grades
   useEffect(() => {
-    const examsRef = ref(db, "examGrades");
-    onValue(examsRef, (snapshot) => {
+    const usersRef = ref(db, "users");
+    onValue(usersRef, (snapshot) => {
       if (snapshot.exists()) {
-        setExams(snapshot.val());
+        const usersData = snapshot.val();
+        const formattedUsers = Object.entries(usersData).map(([id, user]) => ({
+          id,
+          ...user,
+        }));
+        setUsers(formattedUsers);
+
+        // Group exam grades by course and exam name
+        const coursesData = {};
+        formattedUsers.forEach((user) => {
+          if (user.examGrades && user.enrolledCourse) {
+            const course = user.enrolledCourse;
+            if (!coursesData[course]) {
+              coursesData[course] = {};
+            }
+            Object.entries(user.examGrades).forEach(([examName, exam]) => {
+              if (!coursesData[course][examName]) {
+                coursesData[course][examName] = [];
+              }
+              coursesData[course][examName].push({
+                userId: user.id,
+                studentId: user.studentId, // Add studentId to the exam data
+                userName: user.name,
+                school: user.school,
+                ...exam,
+              });
+            });
+          }
+        });
+        setCourses(coursesData);
       } else {
-        setExams({});
+        setUsers([]);
+        setCourses({});
       }
     });
   }, []);
 
-  // Fetch students dynamically when an exam is selected
-  useEffect(() => {
-    if (selectedExam) {
-      const studentsRef = ref(db, `examGrades/${selectedExam}/data`);
-      const unsubscribe = onValue(studentsRef, (snapshot) => {
-        if (snapshot.exists()) {
-          setStudents(Object.entries(snapshot.val()));
-        } else {
-          setStudents([]);
-        }
-      });
-
-      return () => off(studentsRef); // Cleanup listener when unmounting or switching exams
-    }
-  }, [selectedExam]);
-
-  // Select exam and trigger real-time updates
-  const handleExamSelect = (examId) => {
-    setSelectedExam(examId);
-  };
-
-  // Add new exam
-  const handleAddExam = () => {
-    if (newExamName) {
-      push(ref(db, "examGrades"), { name: newExamName, data: {} });
-      setNewExamName("");
-    }
-  };
-
-  // Delete exam
-  const handleDeleteExam = (examId) => {
-    remove(ref(db, `examGrades/${examId}`));
-    setSelectedExam(null);
-  };
-
-  // Add student mark
-  const handleAddMark = () => {
-    if (selectedExam && newStudent.studentId && newStudent.studentName) {
-      const studentRef = ref(db, `examGrades/${selectedExam}/data`);
-      push(studentRef, newStudent);
-      setNewStudent({ studentId: "", studentName: "", mark: "", grade: "", school: "" });
-    }
-  };
-
-  // Delete student mark
-  const handleDeleteMark = (studentKey) => {
-    remove(ref(db, `examGrades/${selectedExam}/data/${studentKey}`));
-  };
+  // Filter users based on school, search query, and student ID
+  const filteredExams = selectedCourse && selectedExam
+    ? courses[selectedCourse][selectedExam]?.filter((exam) => {
+        const matchesSchool = !schoolFilter || exam.school === schoolFilter;
+        const matchesSearch = !searchQuery || exam.userName.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesId = !searchById || exam.studentId.toString().includes(searchById); // Filter by student ID
+        return matchesSchool && matchesSearch && matchesId;
+      })
+    : [];
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-white mb-6">Exams Grades</h1>
+      <h1 className="text-3xl font-bold text-white mb-6">Exam Grades</h1>
 
-      {/* Add Exam */}
-      <div className="bg-white p-4 rounded shadow mb-4 text-black">
-        <input
-          type="text"
-          placeholder="New Exam Name"
-          value={newExamName}
-          onChange={(e) => setNewExamName(e.target.value)}
-          className="border p-2 rounded mr-2"
-        />
-        <button onClick={handleAddExam} className="bg-blue-500 text-white p-2 rounded">Add Exam</button>
-      </div>
-
-      {/* Exam Tabs */}
-      <div className="flex gap-2 overflow-auto mb-4 text-black">
-        {Object.entries(exams).map(([examId, exam]) => (
+      {/* Course Tabs */}
+      <div className="flex gap-2 overflow-auto mb-4">
+        {Object.keys(courses).map((course) => (
           <button
-            key={examId}
-            onClick={() => handleExamSelect(examId)}
-            className={`p-2 rounded-lg ${selectedExam === examId ? "bg-blue-600 text-white" : "bg-gray-200"}`}
+            key={course}
+            onClick={() => {
+              setSelectedCourse(course);
+              setSelectedExam(null); // Reset selected exam when switching courses
+            }}
+            className={`p-2 rounded-lg ${
+              selectedCourse === course ? "bg-blue-600 text-white" : "bg-gray-200"
+            }`}
           >
-            {exam.name} <span onClick={() => handleDeleteExam(examId)} className="text-red-500 ml-2">✖</span>
+            {course}
           </button>
         ))}
       </div>
 
-      {/* Student List */}
-      {selectedExam && (
-        <div className="bg-white p-4 rounded shadow text-black">
-          <h2 className="text-xl font-semibold mb-2">Exam Grades</h2>
+      {/* Exam Tabs (only shown if a course is selected) */}
+      {selectedCourse && (
+        <div className="flex gap-2 overflow-auto mb-4">
+          {Object.keys(courses[selectedCourse]).map((examName) => (
+            <button
+              key={examName}
+              onClick={() => setSelectedExam(examName)}
+              className={`p-2 rounded-lg ${
+                selectedExam === examName ? "bg-blue-600 text-white" : "bg-gray-200"
+              }`}
+            >
+              {examName}
+            </button>
+          ))}
+        </div>
+      )}
 
-          {/* Filters */}
+      {/* Filters */}
+      <div className="bg-white p-4 rounded shadow mb-4 text-black">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <input
             type="text"
             placeholder="Search by Name"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="border p-2 rounded mb-2 w-full"
+            className="border p-2 rounded w-full"
+          />
+          <input
+            type="text"
+            placeholder="Search by Student ID"
+            value={searchById}
+            onChange={(e) => setSearchById(e.target.value)}
+            className="border p-2 rounded w-full"
           />
           <select
             value={schoolFilter}
             onChange={(e) => setSchoolFilter(e.target.value)}
-            className="border p-2 rounded mb-2 w-full"
+            className="border p-2 rounded w-full"
           >
             <option value="">All Schools</option>
-            {[...new Set(students.map(([_, student]) => student.school))].map((school) => (
+            {[...new Set(users.map((user) => user.school))].map((school) => (
               <option key={school} value={school}>{school}</option>
             ))}
           </select>
+        </div>
+      </div>
 
-          {/* Table */}
+      {/* Exam Grades Table (only shown if an exam is selected) */}
+      {selectedExam && (
+        <div className="bg-white p-4 rounded shadow text-black">
+          <h2 className="text-xl font-semibold mb-2">Grades for {selectedExam} ({selectedCourse})</h2>
           <table className="w-full border-collapse border border-gray-300">
             <thead>
               <tr className="bg-gray-200">
-                <th className="border p-2">ID</th>
+                <th className="border p-2">Student ID</th>
                 <th className="border p-2">Name</th>
-                <th className="border p-2">Mark</th>
-                <th className="border p-2">Grade</th>
                 <th className="border p-2">School</th>
-                <th className="border p-2">Actions</th>
+                <th className="border p-2">Grade</th>
+                <th className="border p-2">Mark</th>
+                <th className="border p-2">Total Mark</th>
+                <th className="border p-2">Comment</th>
               </tr>
             </thead>
             <tbody>
-              {students
-                .filter(([_, student]) =>
-                  (!schoolFilter || student.school === schoolFilter) &&
-                  (!searchQuery || student.studentName.toLowerCase().includes(searchQuery.toLowerCase()))
-                )
-                .map(([studentKey, student]) => (
-                  <tr key={studentKey}>
-                    <td className="border p-2">{student.studentId}</td>
-                    <td className="border p-2">{student.studentName}</td>
-                    <td className="border p-2">{student.mark}</td>
-                    <td className="border p-2">{student.grade}</td>
-                    <td className="border p-2">{student.school}</td>
-                    <td className="border p-2 text-red-500 cursor-pointer" onClick={() => handleDeleteMark(studentKey)}>✖</td>
-                  </tr>
-                ))}
+              {filteredExams.map((exam, index) => (
+                <tr key={index}>
+                  <td className="border p-2">{exam.studentId}</td>
+                  <td className="border p-2">{exam.userName}</td>
+                  <td className="border p-2">{exam.school}</td>
+                  <td className="border p-2">{exam.grade}</td>
+                  <td className="border p-2">{exam.mark}</td>
+                  <td className="border p-2">{exam.totalMark}</td>
+                  <td className="border p-2">{exam.comment || "N/A"}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
-
-          {/* Add Student Form */}
-          <div className="mt-4">
-            <h3 className="font-semibold">Add Student Mark</h3>
-            <input type="text" placeholder="ID" className="border p-2 max-w-20 rounded mr-2" value={newStudent.studentId} onChange={(e) => setNewStudent({ ...newStudent, studentId: e.target.value })} />
-            <input type="text" placeholder="Name" className="border p-2 rounded mr-2" value={newStudent.studentName} onChange={(e) => setNewStudent({ ...newStudent, studentName: e.target.value })} />
-            <input type="number" placeholder="Mark" className="border max-w-20 p-2 rounded mr-2" value={newStudent.mark} onChange={(e) => setNewStudent({ ...newStudent, mark: e.target.value })} />
-            <input type="text" placeholder="School" className="border p-2 rounded mr-2" value={newStudent.school} onChange={(e) => setNewStudent({ ...newStudent, school: e.target.value })} />
-            <input type="text" placeholder="Grade" className="border max-w-20 p-2 rounded mr-2" value={newStudent.grade} onChange={(e) => setNewStudent({ ...newStudent, grade: e.target.value })} />
-            <button onClick={handleAddMark} className="bg-blue-500 text-white p-2 rounded">Add</button>
-          </div>
         </div>
       )}
     </div>

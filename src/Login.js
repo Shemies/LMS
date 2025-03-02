@@ -4,17 +4,21 @@ import { auth, db } from "./firebase";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { ref, get } from "firebase/database";
-import { AuthContext } from "./AuthContext";
+import { useAuth } from "./AuthContext"; // Import useAuth
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false); // Add loading state
   const navigate = useNavigate();
-  const { setRole } = useContext(AuthContext); // Get setRole from context
+  const { setRole, setEnrolledCourse } = useAuth(); // Use setRole and setEnrolledCourse from context
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true); // Set loading to true when login starts
+    setError(""); // Clear any previous errors
+
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
@@ -36,7 +40,10 @@ const Login = () => {
 
           if (foundUser) {
             setRole(foundUser.role); // Set role in context
+            setEnrolledCourse(foundUser.enrolledCourse); // Set enrolled course in context
+
             console.log("User Role:", foundUser.role);
+            console.log("Enrolled Course:", foundUser.enrolledCourse);
 
             // Navigate based on role
             if (foundUser.role === "admin") {
@@ -45,16 +52,35 @@ const Login = () => {
               navigate("/dashboard");
             }
           } else {
-            setError("User role not found.");
+            setError("User data not found. Please contact support.");
           }
         } else {
-          setError("User not found in database.");
+          setError("No users found in the database. Please contact support.");
         }
       } else {
         setError("Please verify your email before logging in.");
       }
     } catch (err) {
-      setError(err.message);
+      // Handle specific Firebase errors
+      switch (err.code) {
+        case "auth/invalid-email":
+          setError("Invalid email address.");
+          break;
+        case "auth/user-disabled":
+          setError("Your account has been disabled. Please contact support.");
+          break;
+        case "auth/user-not-found":
+          setError("No user found with this email address.");
+          break;
+        case "auth/wrong-password":
+          setError("Incorrect password. Please try again.");
+          break;
+        default:
+          setError("An error occurred. Please try again later.");
+          break;
+      }
+    } finally {
+      setLoading(false); // Set loading to false when login finishes
     }
   };
 
@@ -74,6 +100,7 @@ const Login = () => {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
               className="w-full mt-2 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              required
             />
           </div>
 
@@ -85,17 +112,19 @@ const Login = () => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               className="w-full mt-2 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              required
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-blue-500 text-white font-semibold py-2 rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition"
+            className="w-full bg-blue-500 text-white font-semibold py-2 rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition disabled:opacity-50"
+            disabled={loading} // Disable button when loading
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
-        <p>
+        <p className="mt-4 text-center">
           Don't have an account?{" "}
           <Link to="/signup" className="text-blue-500 hover:underline">
             Sign Up

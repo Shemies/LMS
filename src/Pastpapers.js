@@ -1,30 +1,100 @@
 import React, { useState, useEffect } from "react";
-import { db, ref, onValue } from "./firebase";
+import { db, ref, onValue, query, orderByChild, equalTo } from "./firebase";
+import { auth } from "./firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import Layout from "./Layout";
 
 const PastPapers = () => {
   const [pastPapers, setPastPapers] = useState({});
   const [selectedYear, setSelectedYear] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [enrolledCourse, setEnrolledCourse] = useState(null);
 
-  // Fetch past papers from Firebase
+  // Fetch user data and enrolled course
   useEffect(() => {
-    const papersRef = ref(db, "pastpapers");
-    onValue(papersRef, (snapshot) => {
-      if (snapshot.exists()) {
-        setPastPapers(snapshot.val());
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const usersRef = ref(db, "users");
+        const userQuery = query(usersRef, orderByChild("email"), equalTo(user.email));
+
+        const unsubscribeUser = onValue(userQuery, (snapshot) => {
+          if (snapshot.exists()) {
+            const userData = Object.values(snapshot.val())[0];
+            if (userData.enrolledCourse) {
+              setEnrolledCourse(userData.enrolledCourse); // Set enrolled course
+            } else {
+              setError("No enrolled course found. Please enroll in a course.");
+            }
+          } else {
+            setError("User data not found. Please complete your profile.");
+          }
+          setLoading(false);
+        });
+
+        return () => unsubscribeUser(); // Cleanup user listener
       } else {
-        setPastPapers({});
+        setError("User not authenticated. Please log in.");
+        setLoading(false);
       }
     });
+
+    return () => unsubscribeAuth(); // Cleanup auth listener
   }, []);
+
+  // Fetch past papers for the enrolled course
+  useEffect(() => {
+    if (!enrolledCourse) return; // Exit if no enrolled course
+
+    const papersRef = ref(db, `courses/${enrolledCourse}/pastpapers`);
+    const unsubscribePapers = onValue(
+      papersRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          setPastPapers(snapshot.val());
+        } else {
+          setPastPapers({});
+          setError("No past papers found for the enrolled course.");
+        }
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error fetching past papers:", error);
+        setError("Failed to fetch past papers. Please try again later.");
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribePapers(); // Cleanup papers listener
+  }, [enrolledCourse]);
 
   // Toggle Year View
   const handleYearToggle = (year) => {
     setSelectedYear((prev) => (prev === year ? null : year));
   };
 
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      </Layout>
+    ); // Show loading spinner
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-screen">
+          <p className="text-red-600 text-center">{error}</p>
+        </div>
+      </Layout>
+    ); // Show error message
+  }
+
   return (
-    <Layout username="Shemies">
+    <Layout>
       <h1 className="text-3xl font-bold text-white mb-6">Past Papers</h1>
 
       <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 w-[90%] sm:w-[80%] mx-auto">

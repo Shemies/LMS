@@ -6,10 +6,11 @@ const AdminHomeworks = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [selectedCourse, setSelectedCourse] = useState("AS"); // Default selected course
 
-  // Fetch homeworks from Firebase
+  // Fetch homeworks from Firebase based on the selected course
   useEffect(() => {
-    const homeworksRef = ref(db, "homeworks");
+    const homeworksRef = ref(db, `courses/${selectedCourse}/homeworks`);
 
     onValue(homeworksRef, (snapshot) => {
       if (snapshot.exists()) {
@@ -23,12 +24,12 @@ const AdminHomeworks = () => {
         setHomeworks([]);
       }
     });
-  }, []);
+  }, [selectedCourse]);
 
   // Add new homework
   const handleAddHomework = () => {
     if (title && description && dueDate) {
-      const homeworksRef = ref(db, "homeworks");
+      const homeworksRef = ref(db, `courses/${selectedCourse}/homeworks`);
       push(homeworksRef, { title, description, dueDate });
 
       // Clear input fields
@@ -40,13 +41,44 @@ const AdminHomeworks = () => {
 
   // Delete a homework
   const handleDeleteHomework = (id) => {
-    const homeworkRef = ref(db, `homeworks/${id}`);
+    const homeworkRef = ref(db, `courses/${selectedCourse}/homeworks/${id}`);
     remove(homeworkRef);
+  };
+
+  // Function to check if a due date is past today
+  const isPastDue = (dueDate) => {
+    const today = new Date();
+    const due = new Date(dueDate);
+    return due < today;
   };
 
   return (
     <div>
       <h1 className="text-3xl font-bold mb-6 text-white">Homeworks</h1>
+
+      {/* Course Tabs */}
+      <div className="flex space-x-4 mb-6">
+        <button
+          onClick={() => setSelectedCourse("AS")}
+          className={`px-4 py-2 rounded-lg ${
+            selectedCourse === "AS"
+              ? "bg-blue-500 text-white"
+              : "bg-gray-200 text-gray-700"
+          }`}
+        >
+          AS Course
+        </button>
+        <button
+          onClick={() => setSelectedCourse("OL")}
+          className={`px-4 py-2 rounded-lg ${
+            selectedCourse === "OL"
+              ? "bg-blue-500 text-white"
+              : "bg-gray-200 text-gray-700"
+          }`}
+        >
+          OL Course
+        </button>
+      </div>
 
       {/* Form to Add Homework */}
       <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 w-[80%] mx-auto mb-6">
@@ -88,7 +120,14 @@ const AdminHomeworks = () => {
               <h2 className="text-xl font-semibold">{hw.title}</h2>
               <p className="text-gray-300">{hw.description}</p>
               <p className="mt-2 font-medium">
-                Due Date: <span className="text-yellow-400">{hw.dueDate}</span>
+                Due Date:{" "}
+                <span
+                  className={`${
+                    isPastDue(hw.dueDate) ? "text-red-500" : "text-yellow-400"
+                  }`}
+                >
+                  {hw.dueDate}
+                </span>
               </p>
               <button
                 onClick={() => handleDeleteHomework(hw.id)}

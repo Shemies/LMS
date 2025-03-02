@@ -4,31 +4,41 @@ import { Link } from "react-router-dom";
 import Layout from "./Layout";
 import { useProgress } from "./progressContext";
 import { db, ref, onValue } from "./firebase";
+import { useAuth } from "./AuthContext"; // Import useAuth
 
 const Dashboard = () => {
   const [username, setUsername] = useState("Loading...");
   const { progress, setProgress } = useProgress();
+  const { enrolledCourse } = useAuth(); // Use enrolledCourse from context
 
   // State for dynamic data
   const [assignments, setAssignments] = useState([]);
-  const [exams, setExams] = useState([]);
-  const [recentActivity, setRecentActivity] = useState([]);
+  const [latestVideo, setLatestVideo] = useState(null); // State for latest video
+  const [latestChapterDone, setLatestChapterDone] = useState(null);
 
   useEffect(() => {
+    if (!enrolledCourse) return; // Exit if no enrolled course
+
     // Fetch chapters progress from Firebase
-    const chaptersRef = ref(db, "chapters");
+    const chaptersRef = ref(db, `courses/${enrolledCourse}/chapters`);
     const unsubscribeChapters = onValue(chaptersRef, (snapshot) => {
       if (snapshot.exists()) {
         const chaptersData = snapshot.val();
-        const completedChapters = Object.values(chaptersData).filter(ch => ch.done).length;
+        const completedChapters = Object.values(chaptersData).filter((ch) => ch.done).length;
         const totalChapters = Object.keys(chaptersData).length;
         const calculatedProgress = Math.round((completedChapters / totalChapters) * 100);
         setProgress(calculatedProgress);
+
+        // Find the latest completed chapter
+        const latestChapter = Object.values(chaptersData)
+          .filter((ch) => ch.done)
+          .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))[0];
+        setLatestChapterDone(latestChapter);
       }
     });
 
     // Fetch assignments from Firebase
-    const assignmentsRef = ref(db, "homeworks");
+    const assignmentsRef = ref(db, `courses/${enrolledCourse}/homeworks`);
     const unsubscribeAssignments = onValue(assignmentsRef, (snapshot) => {
       if (snapshot.exists()) {
         const assignmentsData = Object.values(snapshot.val());
@@ -36,31 +46,22 @@ const Dashboard = () => {
       }
     });
 
-    // Fetch exams from Firebase
-    const examsRef = ref(db, "exams");
-    const unsubscribeExams = onValue(examsRef, (snapshot) => {
+    // Fetch latest video from Firebase
+    const videosRef = ref(db, `courses/${enrolledCourse}/videos`);
+    const unsubscribeVideos = onValue(videosRef, (snapshot) => {
       if (snapshot.exists()) {
-        const examsData = Object.values(snapshot.val());
-        setExams(examsData);
-      }
-    });
-
-    // Fetch recent activity from Firebase
-    const activityRef = ref(db, "recentActivity");
-    const unsubscribeActivity = onValue(activityRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const activityData = Object.values(snapshot.val());
-        setRecentActivity(activityData);
+        const videosData = snapshot.val();
+        const latestVideo = Object.values(videosData).sort((a, b) => new Date(b.date) - new Date(a.date))[0]; // Sort by date if available
+        setLatestVideo(latestVideo);
       }
     });
 
     return () => {
       unsubscribeChapters();
       unsubscribeAssignments();
-      unsubscribeExams();
-      unsubscribeActivity();
+      unsubscribeVideos();
     };
-  }, [setProgress]);
+  }, [enrolledCourse, setProgress]);
 
   const safeProgress = progress || 0;
 
@@ -85,7 +86,7 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Syllabus Completion */}
-        <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 transition-transform duration-300 hover:scale-105 hover:shadow-2xl flex flex-col items-center min-w-0">
+        <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 transition-transform duration-300 hover:scale-105 hover:shadow-2xl flex flex-col items-center min-w-0 h-full">
           <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Syllabus Completion</h3>
           <div className="w-full flex justify-center max-w-[300px]">
             <ResponsiveContainer width="100%" height={chartSize}>
@@ -112,60 +113,53 @@ const Dashboard = () => {
         </div>
 
         {/* Due Assignments */}
-        <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
-          <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Due Assignments</h3>
-          <ul className="space-y-2">
-            {assignments.length > 0 ? (
-              assignments.map((assignment, index) => (
-                <li key={index} className="p-3 bg-gray-100 rounded-lg">
-                  <span className="font-semibold text-[#1E293B]">{assignment.title}</span> - <span className="text-gray-600">{assignment.due}</span>
-                </li>
-              ))
-            ) : (
-              <p className="text-gray-500">No assignments due.</p>
-            )}
-          </ul>
-        </div>
-
-        {/* Upcoming Exams */}
-        <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
-          <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Upcoming Exams</h3>
-          <ul className="space-y-2">
-            {exams.length > 0 ? (
-              exams.map((exam, index) => (
-                <li key={index} className="p-3 bg-gray-100 rounded-lg">
-                  <span className="font-semibold text-[#1E293B]">{exam.subject}</span> - <span className="text-gray-600">{exam.date}</span>
-                </li>
-              ))
-            ) : (
-              <p className="text-gray-500">No upcoming exams.</p>
-            )}
-          </ul>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
-          <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Recent Activity</h3>
-          <ul className="space-y-2">
-            {recentActivity.length > 0 ? (
-              recentActivity.map((activity, index) => (
-                <li key={index} className="p-3 bg-gray-100 rounded-lg text-black">{activity}</li>
-              ))
-            ) : (
-              <p className="text-gray-500">No recent activity.</p>
-            )}
-          </ul>
-        </div>
-
-        {/* Quick Links */}
-        <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 transition-transform duration-300 hover:scale-105 hover:shadow-2xl col-span-1 md:col-span-2">
-          <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Quick Links</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <Link to="/videos" className="p-4 text-black bg-gray-200 text-center rounded-lg hover:bg-gray-300 transition">Videos</Link>
-            <Link to="/markschemes" className="p-4 text-black bg-gray-200 text-center rounded-lg hover:bg-gray-300 transition">Mark Schemes</Link>
-            <Link to="/homeworks" className="p-4 text-black bg-gray-200 text-center rounded-lg hover:bg-gray-300 transition">Homeworks</Link>
+        <Link to="/homeworks" className="block">
+          <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 transition-transform duration-300 hover:scale-105 hover:shadow-2xl h-full">
+            <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Due Assignments</h3>
+            <ul className="space-y-2">
+              {assignments.length > 0 ? (
+                assignments.map((assignment, index) => (
+                  <li key={index} className="p-3 bg-gray-100 rounded-lg">
+                    <span className="font-semibold text-[#1E293B]">{assignment.title}</span> - <span className="text-gray-600">{assignment.dueDate}</span>
+                  </li>
+                ))
+              ) : (
+                <p className="text-gray-500">No assignments due.</p>
+              )}
+            </ul>
           </div>
-        </div>
+        </Link>
+
+        {/* Latest Video */}
+        <Link to="/videos" className="block">
+          <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 transition-transform duration-300 hover:scale-105 hover:shadow-2xl h-full">
+            <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Latest Video</h3>
+            {latestVideo ? (
+              <div className="p-3 bg-gray-100 rounded-lg">
+                <span className="font-semibold text-[#1E293B]">{latestVideo.title}</span> -{" "}
+                <a href={latestVideo.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                  Watch Video
+                </a>
+              </div>
+            ) : (
+              <p className="text-gray-500">No videos available.</p>
+            )}
+          </div>
+        </Link>
+
+        {/* Latest Chapter Done */}
+        <Link to="/chapters" className="block">
+          <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 transition-transform duration-300 hover:scale-105 hover:shadow-2xl h-full">
+            <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Latest Chapter Done</h3>
+            {latestChapterDone ? (
+              <div className="p-3 bg-gray-100 rounded-lg">
+                <span className="font-semibold text-[#1E293B]">{latestChapterDone.name}</span>
+              </div>
+            ) : (
+              <p className="text-gray-500">No chapters completed yet.</p>
+            )}
+          </div>
+        </Link>
       </div>
     </Layout>
   );
