@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { db, ref, onValue } from "./firebase";
 import { Swiper, SwiperSlide } from "swiper/react";
-import SwiperCore, { Navigation, Pagination } from "swiper";
+import SwiperCore from "swiper"; // Import SwiperCore
+import { Navigation, Pagination } from "swiper/modules"; // Correct import path
 import "swiper/swiper-bundle.css"; // Import Swiper styles
 
 // Initialize Swiper modules
