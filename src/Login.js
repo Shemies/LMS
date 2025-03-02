@@ -1,23 +1,23 @@
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "./firebase";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { ref, get } from "firebase/database";
-import { useAuth } from "./AuthContext"; // Import useAuth
+import { useAuth } from "./AuthContext";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false); // Add loading state
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { setRole, setEnrolledCourse } = useAuth(); // Use setRole and setEnrolledCourse from context
+  const { setRole, setEnrolledCourse } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true); // Set loading to true when login starts
-    setError(""); // Clear any previous errors
+    setLoading(true);
+    setError("");
 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -26,26 +26,22 @@ const Login = () => {
       if (user.emailVerified) {
         console.log("Login successful");
 
-        // Fetch all users from the database
         const usersRef = ref(db, "users");
         const snapshot = await get(usersRef);
 
         if (snapshot.exists()) {
           const usersData = snapshot.val();
-
-          // Find the user by email
           const foundUser = Object.values(usersData).find(
             (u) => u.email === user.email
           );
 
           if (foundUser) {
-            setRole(foundUser.role); // Set role in context
-            setEnrolledCourse(foundUser.enrolledCourse); // Set enrolled course in context
+            setRole(foundUser.role);
+            setEnrolledCourse(foundUser.enrolledCourse);
 
             console.log("User Role:", foundUser.role);
             console.log("Enrolled Course:", foundUser.enrolledCourse);
 
-            // Navigate based on role
             if (foundUser.role === "admin") {
               navigate("/admin");
             } else {
@@ -61,7 +57,7 @@ const Login = () => {
         setError("Please verify your email before logging in.");
       }
     } catch (err) {
-      // Handle specific Firebase errors
+      console.error("Firebase Error:", err); // Log the full error object
       switch (err.code) {
         case "auth/invalid-email":
           setError("Invalid email address.");
@@ -80,7 +76,7 @@ const Login = () => {
           break;
       }
     } finally {
-      setLoading(false); // Set loading to false when login finishes
+      setLoading(false);
     }
   };
 
@@ -119,7 +115,7 @@ const Login = () => {
           <button
             type="submit"
             className="w-full bg-blue-500 text-white font-semibold py-2 rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition disabled:opacity-50"
-            disabled={loading} // Disable button when loading
+            disabled={loading}
           >
             {loading ? "Logging in..." : "Login"}
           </button>
