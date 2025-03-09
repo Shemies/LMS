@@ -2,18 +2,18 @@ import React, { useState, useEffect } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { db, ref, onValue } from "./firebase";
 import { Swiper, SwiperSlide } from "swiper/react";
-import SwiperCore from "swiper"; // Import SwiperCore
-import { Navigation, Pagination } from "swiper/modules"; // Correct import path
-import "swiper/swiper-bundle.css"; // Import Swiper styles
+import SwiperCore from "swiper";
+import { Navigation, Pagination } from "swiper/modules";
+import "swiper/swiper-bundle.css";
 
 // Initialize Swiper modules
 SwiperCore.use([Navigation, Pagination]);
 
 const Dashboard = () => {
   const [courses, setCourses] = useState({});
-  const [studentsCount, setStudentsCount] = useState(0);
-  const [homeworks, setHomeworks] = useState([]);
-  const [gradeData, setGradeData] = useState({ AS: [], OL: [] });
+  const [studentsCount, setStudentsCount] = useState({}); // Students count per course
+  const [homeworks, setHomeworks] = useState({}); // Homeworks per course
+  const [gradeData, setGradeData] = useState({});
 
   // Fetch data from Firebase
   useEffect(() => {
@@ -25,7 +25,8 @@ const Dashboard = () => {
         setCourses(coursesData);
 
         // Calculate progress and grade distribution for each course
-        const gradeData = { AS: [], OL: [] };
+        const gradeData = {};
+        const homeworksData = {}; // Homeworks grouped by course
         Object.entries(coursesData).forEach(([course, data]) => {
           // Calculate syllabus completion
           const chapters = data.chapters || {};
@@ -51,33 +52,34 @@ const Dashboard = () => {
             }
           });
 
+          // Fetch homeworks for the course
+          if (data.homeworks) {
+            homeworksData[course] = Object.values(data.homeworks);
+          }
+
           // Update state
           setGradeData(gradeData);
+          setHomeworks(homeworksData);
         });
       }
     });
 
-    // Fetch student count
+    // Fetch student count per course
     const usersRef = ref(db, "users");
     onValue(usersRef, (snapshot) => {
       if (snapshot.exists()) {
-        const students = Object.values(snapshot.val()).filter((user) => user.student);
-        setStudentsCount(students.length);
-      }
-    });
-
-    // Fetch homeworks
-    const homeworksRef = ref(db, "courses");
-    onValue(homeworksRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const coursesData = snapshot.val();
-        const allHomeworks = [];
-        Object.values(coursesData).forEach((course) => {
-          if (course.homeworks) {
-            allHomeworks.push(...Object.values(course.homeworks));
+        const users = Object.values(snapshot.val()).filter((user) => user.student);
+        const studentsCountData = {}; // Students count grouped by course
+        users.forEach((user) => {
+          const course = user.enrolledCourse;
+          if (course) {
+            if (!studentsCountData[course]) {
+              studentsCountData[course] = 0;
+            }
+            studentsCountData[course] += 1;
           }
         });
-        setHomeworks(allHomeworks);
+        setStudentsCount(studentsCountData);
       }
     });
   }, []);
@@ -92,84 +94,104 @@ const Dashboard = () => {
     <div className="p-6">
       <h1 className="text-3xl font-bold text-white mb-6">Admin Dashboard</h1>
 
-      {/* Grid Layout for Dashboard Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-        {/* Syllabus Completion Carousel */}
+      {/* Grid Layout for Dashboard Boxes */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Box 1: Syllabus Completion for All Courses */}
         <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
           <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Syllabus Completion</h3>
           <Swiper
             spaceBetween={30}
             slidesPerView={1}
             navigation
-            pagination={{ clickable: true }}
+            pagination={{ clickable: true, el: ".custom-pagination-syllabus" }}
           >
-            {Object.entries(courses).map(([course, data]) => {
-              const chapters = data.chapters || {};
-              const completedChapters = Object.values(chapters).filter((ch) => ch.done).length;
-              const totalChapters = Object.keys(chapters).length;
-              const progress = Math.round((completedChapters / totalChapters) * 100);
-
-              const progressData = [
-                { name: "Completed", value: progress },
-                { name: "Remaining", value: 100 - progress },
-              ];
-
-              return (
-                <SwiperSlide key={course}>
-                  <div className="flex flex-col items-center">
-                    <h4 className="text-md font-semibold mb-2 text-[#0F172A]">{course} Syllabus</h4>
-                    <div className="w-full flex justify-center max-w-[300px]">
-                      <ResponsiveContainer width="100%" height={220}>
-                        <PieChart>
-                          <Pie
-                            data={progressData}
-                            cx="50%"
-                            cy="50%"
-                            startAngle={90}
-                            endAngle={-270}
-                            innerRadius="60%"
-                            outerRadius="90%"
-                            dataKey="value"
-                          >
-                            {progressData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index]} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <p className="text-center text-lg font-bold mt-3 text-black">{progress}% Completed</p>
+            {Object.entries(courses).map(([course, data]) => (
+              <SwiperSlide key={course}>
+                <div className="flex flex-col items-center">
+                  <h4 className="text-md font-semibold mb-2 text-[#0F172A]">{course}</h4>
+                  <div className="w-full flex justify-center">
+                    <ResponsiveContainer width="100%" height={150}>
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: "Completed", value: Math.round((Object.values(data.chapters || {}).filter((ch) => ch.done).length / Object.keys(data.chapters || {}).length) * 100) },
+                            { name: "Remaining", value: 100 - Math.round((Object.values(data.chapters || {}).filter((ch) => ch.done).length / Object.keys(data.chapters || {}).length) * 100) },
+                          ]}
+                          cx="50%"
+                          cy="50%"
+                          startAngle={90}
+                          endAngle={-270}
+                          innerRadius="60%"
+                          outerRadius="90%"
+                          dataKey="value"
+                        >
+                          {[0, 1].map((index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
-                </SwiperSlide>
-              );
-            })}
+                  <p className="text-center text-lg font-bold mt-3 text-black">
+                    {Math.round((Object.values(data.chapters || {}).filter((ch) => ch.done).length / Object.keys(data.chapters || {}).length) * 100)}% Completed
+                  </p>
+                </div>
+              </SwiperSlide>
+            ))}
           </Swiper>
+          <div className="custom-pagination-syllabus mt-4 flex justify-center space-x-2"></div>
         </div>
 
-        {/* Total Students */}
-        <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 text-center transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
-          <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Total Students</h3>
-          <div className="text-6xl font-bold text-blue-600">{studentsCount}</div>
-        </div>
-
-        {/* Grade Distribution Carousel */}
+        {/* Box 2: Due Assignments for All Courses */}
         <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
-          <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Grade Distribution (Last Exam)</h3>
+          <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Due Assignments</h3>
           <Swiper
             spaceBetween={30}
             slidesPerView={1}
             navigation
-            pagination={{ clickable: true }}
+            pagination={{ clickable: true, el: ".custom-pagination-assignments" }}
           >
-            {Object.entries(gradeData).map(([course, data]) => (
+            {Object.entries(homeworks).map(([course, assignments]) => (
+              <SwiperSlide key={course}>
+                <div className="flex flex-col p-4 items-center">
+                  <h4 className="text-xl font-semibold mb-2 text-[#0F172A]">{course}</h4>
+                  <ul className="space-y-2 w-full p-8">
+                    {assignments.length > 0 ? (
+                      assignments.map((hw, index) => (
+                        <li key={index} className="p-3 bg-gray-100 rounded-lg">
+                          <span className="font-semibold text-[#1E293B]">{hw.title}</span> -{" "}
+                          <span className="text-gray-600">{hw.dueDate}</span>
+                        </li>
+                      ))
+                    ) : (
+                      <p className="text-gray-500">No assignments due.</p>
+                    )}
+                  </ul>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+          <div className="custom-pagination-assignments mt-4 flex justify-center space-x-2"></div>
+        </div>
+
+        {/* Box 3: Grade Distribution for All Courses */}
+        <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
+          <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Grade Distribution</h3>
+          <Swiper
+            spaceBetween={30}
+            slidesPerView={1}
+            navigation
+            pagination={{ clickable: true, el: ".custom-pagination-grades" }}
+          >
+            {Object.entries(gradeData).map(([course, grades]) => (
               <SwiperSlide key={course}>
                 <div className="flex flex-col items-center">
-                  <h4 className="text-md font-semibold mb-2 text-[#0F172A]">{course} Grades</h4>
-                  <ResponsiveContainer width="100%" height={220}>
+                  <h4 className="text-md font-semibold mb-2 text-[#0F172A]">{course}</h4>
+                  <ResponsiveContainer width="100%" height={150}>
                     <PieChart>
                       <Pie
-                        data={data}
+                        data={grades}
                         cx="50%"
                         cy="50%"
                         startAngle={90}
@@ -177,10 +199,9 @@ const Dashboard = () => {
                         innerRadius="60%"
                         outerRadius="90%"
                         dataKey="value"
-                        labelStyle={{ fontSize: "8px", fontWeight: "bold", fill: "#333" }}
                       >
-                        {data.map((entry) => (
-                          <Cell key={entry.name} fill={GRADE_COLORS[entry.name]} />
+                        {grades.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={GRADE_COLORS[entry.name]} />
                         ))}
                       </Pie>
                       <Tooltip />
@@ -190,23 +211,28 @@ const Dashboard = () => {
               </SwiperSlide>
             ))}
           </Swiper>
+          <div className="custom-pagination-grades mt-4 flex justify-center space-x-2"></div>
         </div>
 
-        {/* Due Assignments */}
+        {/* Box 4: Total Students for All Courses */}
         <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
-          <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Due Assignments</h3>
-          <ul className="space-y-2">
-            {homeworks.length > 0 ? (
-              homeworks.map((hw, index) => (
-                <li key={index} className="p-3 bg-gray-100 rounded-lg">
-                  <span className="font-semibold text-[#1E293B]">{hw.title}</span> -{" "}
-                  <span className="text-gray-600">{hw.dueDate}</span>
-                </li>
-              ))
-            ) : (
-              <p className="text-gray-500">No assignments due.</p>
-            )}
-          </ul>
+          <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Total Students</h3>
+          <Swiper
+            spaceBetween={30}
+            slidesPerView={1}
+            navigation
+            pagination={{ clickable: true, el: ".custom-pagination-students" }}
+          >
+            {Object.entries(studentsCount).map(([course, count]) => (
+              <SwiperSlide key={course}>
+                <div className="flex flex-col p-9 items-center">
+                  <h4 className="text-3xl font-semibold mb-2 text-[#0F172A]">{course}</h4>
+                  <div className="text-6xl font-bold p-9 text-blue-600">{count}</div>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+          <div className="custom-pagination-students mt-4 flex justify-center space-x-2"></div>
         </div>
       </div>
     </div>
