@@ -151,30 +151,39 @@ const UsersManagement = () => {
     });
   };
 
-  // Export users to CSV
+  // Export users to CSV (only selected tab)
   const exportToCSV = () => {
-    const usersData = users.map((user) => [
-      user.name,
-      user.email,
-      user.studentId,
-      user.enrolledCourse, // Use enrolledCourse instead of level
-      user.student ? "true" : "false",
-      user.school,
-    ]);
+    // Filter users based on the active course
+    const usersData = users
+      .filter((user) => user.enrolledCourse === activeCourse) // Only include users from the active course
+      .map((user) => [
+        user.name,
+        user.email,
+        user.studentId,
+        user.enrolledCourse,
+        user.student ? "true" : "false",
+        user.school,
+      ]);
+
+    // Generate CSV
     const csv = Papa.unparse(usersData);
     const blob = new Blob([csv], { type: "text/csv" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = "users.csv";
+    link.download = `${activeCourse}_users.csv`; // Name the file based on the active course
     link.click();
   };
 
-  // Export users to Excel
+  // Export users to Excel (only selected tab)
   const exportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(users);
+    // Filter users based on the active course
+    const usersData = users.filter((user) => user.enrolledCourse === activeCourse);
+
+    // Generate Excel file
+    const ws = XLSX.utils.json_to_sheet(usersData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Users");
-    XLSX.writeFile(wb, "users.xlsx");
+    XLSX.writeFile(wb, `${activeCourse}_users.xlsx`); // Name the file based on the active course
   };
 
   // Delete a user
@@ -334,7 +343,7 @@ const UsersManagement = () => {
           </thead>
           <tbody>
             {filteredUsers.map((user) => (
-              <tr key={user.id}> {/* Ensure the key is unique */}
+              <tr key={user.id}>
                 {editingUserId === user.id ? (
                   <>
                     <td className="border border-gray-600 p-2">
