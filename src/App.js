@@ -23,6 +23,7 @@ import AdminHomeworks from "./AdminHomeworks";
 import AdminPastPapers from "./AdminPastpapers";
 import AdminExamGrades from "./AdminExams";
 import AdminDashboard from "./AdminDashboard";
+import LandingPage from "./LandingPage";
 
 function App() {
   return (
@@ -31,9 +32,10 @@ function App() {
         <Router>
           <Routes>
             {/* Public Routes */}
-            <Route path="/" element={<Login />} />
+            <Route path="/" element={<LandingPage />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/logout" element={<Logout />} />
+            <Route path="/login" element={<Login />}/>
 
             {/* Student Routes */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

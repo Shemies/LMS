@@ -35,7 +35,7 @@ const Dashboard = () => {
           const progress = Math.round((completedChapters / totalChapters) * 100);
 
           // Calculate grade distribution
-          const gradesCount = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+          const gradesCount = {Star:0, A: 0, B: 0, C: 0, D: 0, E: 0, U:0 };
           const usersRef = ref(db, "users");
           onValue(usersRef, (usersSnapshot) => {
             if (usersSnapshot.exists()) {
@@ -88,7 +88,7 @@ const Dashboard = () => {
   const COLORS = ["#3B82F6", "#E5E7EB"];
 
   // Colors for the grade distribution pie chart
-  const GRADE_COLORS = { A: "#4CAF50", B: "#2196F3", C: "#FFEB3B", D: "#FF9800", F: "#F44336" };
+  const GRADE_COLORS = {Star: "#00A36C", A: "#90EE90", B: "#2196F3", C: "#FFEB3B", D: "#F88379", E: "#FF0000", U:"#D2042D" };
 
   return (
     <div className="p-6">
