@@ -19,6 +19,8 @@ const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [username, setUsername] = useState("Loading...");
   const [studentId, setStudentId] = useState("Loading...");
+  const [initials, setInitials] = useState(""); 
+
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -30,8 +32,14 @@ const Layout = ({ children }) => {
         onValue(userQuery, (snapshot) => {
           if (snapshot.exists()) {
             const userData = Object.values(snapshot.val())[0]; // Get the first matching user
-            setUsername(userData.name);
+            const fullName = userData.name;const nameParts = fullName.split(" ");
+            const firstName = nameParts[0]; // Extract first name
+            const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : ""; // Get last name if available
+            
+            setUsername(firstName);
             setStudentId(userData.studentId || "Unknown ID"); // Ensure a fallback if studentId is missing
+            const initials = `${firstName.charAt(0)}${lastName ? lastName.charAt(0) : ""}`;
+            setInitials(initials.toUpperCase()); // Ensure uppercase initials
           } else {
             setUsername("Unknown User");
             setStudentId("Unknown ID");
@@ -108,7 +116,7 @@ const Layout = ({ children }) => {
             >
               {/* Profile Icon with Initial */}
               <div className="w-8 h-8 bg-gray-200 text-black capitalize rounded-full flex items-center justify-center text-sm font-bold">
-                {username.charAt(0)}
+              {initials}
               </div>
               <span className="text-lg capitalize font-semibold">
                 {username} ({studentId})

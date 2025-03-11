@@ -9,8 +9,10 @@ const Profile = () => {
     studentId: "",
     level: "",
   });
+  const [initials, setInitials] = useState(""); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
 
   useEffect(() => {
     const fetchUserData = () => {
@@ -28,12 +30,19 @@ const Profile = () => {
           (snapshot) => {
             if (snapshot.exists()) {
               const userData = Object.values(snapshot.val())[0]; // Get first matched user
+              const fullName = userData.name;
+              const nameParts = fullName.split(" ");
+              const firstName = nameParts[0]; // Extract first name
+              const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : "";
               setUser({
                 name: userData.name || "N/A",
                 email: userData.email || "N/A",
                 studentId: userData.studentId || "N/A",
                 level: userData.enrolledCourse || "N/A",
               });
+
+              const initials = `${firstName.charAt(0)}${lastName ? lastName.charAt(0) : ""}`;
+              setInitials(initials.toUpperCase());
             } else {
               setError("User data not found.");
             }
@@ -82,7 +91,7 @@ const Profile = () => {
         {/* Profile Picture Placeholder */}
         <div className="flex justify-center mb-6">
           <div className="w-24 capitalize h-24 bg-gray-200 rounded-full flex items-center justify-center text-3xl font-bold text-gray-500">
-            {user.name.charAt(0)}
+            {initials}
           </div>
         </div>
 
