@@ -27,40 +27,64 @@ const Dashboard = () => {
         // Calculate progress and grade distribution for each course
         const gradeData = {};
         const homeworksData = {}; // Homeworks grouped by course
-        Object.entries(coursesData).forEach(([course, data]) => {
-          // Calculate syllabus completion
-          const chapters = data.chapters || {};
-          const completedChapters = Object.values(chapters).filter((ch) => ch.done).length;
-          const totalChapters = Object.keys(chapters).length;
-          const progress = Math.round((completedChapters / totalChapters) * 100);
 
-          // Calculate grade distribution
-          const gradesCount = {Star:0, A: 0, B: 0, C: 0, D: 0, E: 0, U:0 };
-          const usersRef = ref(db, "users");
-          onValue(usersRef, (usersSnapshot) => {
-            if (usersSnapshot.exists()) {
-              const users = Object.values(usersSnapshot.val()).filter((user) => user.enrolledCourse === course);
-              users.forEach((user) => {
-                if (user.examGrades) {
-                  const lastExam = Object.values(user.examGrades)[0]; // Get the latest exam
-                  if (lastExam && gradesCount[lastExam.grade] !== undefined) {
-                    gradesCount[lastExam.grade] += 1;
+        // Sort courses by their index
+        const sortedCourses = Object.entries(coursesData).sort(
+          ([, a], [, b]) => a.index - b.index
+        );
+
+        // Fetch users data to determine the latest exam
+        const usersRef = ref(db, "users");
+        onValue(usersRef, (usersSnapshot) => {
+          if (usersSnapshot.exists()) {
+            const users = Object.values(usersSnapshot.val()).filter((user) => user.student);
+
+            // Determine the latest exam across all users
+            let latestExamKey = "";
+            users.forEach((user) => {
+              if (user.examGrades) {
+                const examKeys = Object.keys(user.examGrades);
+                examKeys.forEach((key) => {
+                  if (key > latestExamKey) {
+                    latestExamKey = key; // Update the latest exam key
+                  }
+                });
+              }
+            });
+
+            // Calculate grade distribution for each course using the latest exam
+            sortedCourses.forEach(([course, data]) => {
+              const gradesCount = { Star: 0, A: 0, B: 0, C: 0, D: 0, E: 0, U: 0 };
+              const courseUsers = users.filter((user) => user.enrolledCourse === course);
+
+              courseUsers.forEach((user) => {
+                if (user.examGrades && user.examGrades[latestExamKey]) {
+                  const grade = user.examGrades[latestExamKey].grade;
+                  if (gradesCount[grade] !== undefined) {
+                    gradesCount[grade] += 1;
                   }
                 }
               });
-              gradeData[course] = Object.entries(gradesCount).map(([key, value]) => ({ name: key, value }));
-            }
-          });
 
-          // Fetch homeworks for the course
+              gradeData[course] = Object.entries(gradesCount).map(([key, value]) => ({
+                name: key,
+                value,
+              }));
+            });
+
+            // Update state
+            setGradeData(gradeData);
+          }
+        });
+
+        // Fetch homeworks for each course
+        sortedCourses.forEach(([course, data]) => {
           if (data.homeworks) {
             homeworksData[course] = Object.values(data.homeworks);
           }
-
-          // Update state
-          setGradeData(gradeData);
-          setHomeworks(homeworksData);
         });
+
+        setHomeworks(homeworksData);
       }
     });
 
@@ -88,7 +112,15 @@ const Dashboard = () => {
   const COLORS = ["#3B82F6", "#E5E7EB"];
 
   // Colors for the grade distribution pie chart
-  const GRADE_COLORS = {Star: "#00A36C", A: "#90EE90", B: "#2196F3", C: "#FFEB3B", D: "#F88379", E: "#FF0000", U:"#D2042D" };
+  const GRADE_COLORS = {
+    Star: "#00A36C",
+    A: "#90EE90",
+    B: "#2196F3",
+    C: "#FFEB3B",
+    D: "#F88379",
+    E: "#FF0000",
+    U: "#D2042D",
+  };
 
   return (
     <div className="p-6">
@@ -105,40 +137,63 @@ const Dashboard = () => {
             navigation
             pagination={{ clickable: true, el: ".custom-pagination-syllabus" }}
           >
-            {Object.entries(courses).map(([course, data]) => (
-              <SwiperSlide key={course}>
-                <div className="flex flex-col items-center">
-                  <h4 className="text-md font-semibold mb-2 text-[#0F172A]">{course}</h4>
-                  <div className="w-full flex justify-center">
-                    <ResponsiveContainer width="100%" height={150}>
-                      <PieChart>
-                        <Pie
-                          data={[
-                            { name: "Completed", value: Math.round((Object.values(data.chapters || {}).filter((ch) => ch.done).length / Object.keys(data.chapters || {}).length) * 100) },
-                            { name: "Remaining", value: 100 - Math.round((Object.values(data.chapters || {}).filter((ch) => ch.done).length / Object.keys(data.chapters || {}).length) * 100) },
-                          ]}
-                          cx="50%"
-                          cy="50%"
-                          startAngle={90}
-                          endAngle={-270}
-                          innerRadius="60%"
-                          outerRadius="90%"
-                          dataKey="value"
-                        >
-                          {[0, 1].map((index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
+            {Object.entries(courses)
+              .sort(([, a], [, b]) => a.index - b.index) // Sort courses by index
+              .map(([course, data]) => (
+                <SwiperSlide key={course}>
+                  <div className="flex flex-col items-center">
+                    <h4 className="text-md font-semibold mb-2 text-[#0F172A]">{course}</h4>
+                    <div className="w-full flex justify-center">
+                      <ResponsiveContainer width="100%" height={150}>
+                        <PieChart>
+                          <Pie
+                            data={[
+                              {
+                                name: "Completed",
+                                value: Math.round(
+                                  (Object.values(data.chapters || {}).filter((ch) => ch.done).length /
+                                    Object.keys(data.chapters || {}).length) *
+                                    100
+                                ),
+                              },
+                              {
+                                name: "Remaining",
+                                value:
+                                  100 -
+                                  Math.round(
+                                    (Object.values(data.chapters || {}).filter((ch) => ch.done).length /
+                                      Object.keys(data.chapters || {}).length) *
+                                      100
+                                  ),
+                              },
+                            ]}
+                            cx="50%"
+                            cy="50%"
+                            startAngle={90}
+                            endAngle={-270}
+                            innerRadius="60%"
+                            outerRadius="90%"
+                            dataKey="value"
+                          >
+                            {[0, 1].map((index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index]} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <p className="text-center text-lg font-bold mt-3 text-black">
+                      {Math.round(
+                        (Object.values(data.chapters || {}).filter((ch) => ch.done).length /
+                          Object.keys(data.chapters || {}).length) *
+                          100
+                      )}
+                      % Completed
+                    </p>
                   </div>
-                  <p className="text-center text-lg font-bold mt-3 text-black">
-                    {Math.round((Object.values(data.chapters || {}).filter((ch) => ch.done).length / Object.keys(data.chapters || {}).length) * 100)}% Completed
-                  </p>
-                </div>
-              </SwiperSlide>
-            ))}
+                </SwiperSlide>
+              ))}
           </Swiper>
           <div className="custom-pagination-syllabus mt-4 flex justify-center space-x-2"></div>
         </div>

@@ -112,7 +112,7 @@ const Layout = ({ children }) => {
           <div className="flex items-center space-x-3 ml-auto">
             <Link
               to="/profile"
-              className="flex items-center space-x-3 cursor-pointer hover:underline"
+              className="flex items-center space-x-3 cursor-pointer "
             >
               {/* Profile Icon with Initial */}
               <div className="w-8 h-8 bg-gray-200 text-black capitalize rounded-full flex items-center justify-center text-sm font-bold">

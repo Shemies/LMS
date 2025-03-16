@@ -1,28 +1,35 @@
 import React from "react";
+import teamImage from "./20944338.jpg"; // Import the graphic image
 
 const LandingPage = () => {
   return (
     <div className="font-sans bg-gray-50 text-gray-900">
       {/* Navbar */}
-      <nav className="bg-white shadow-lg">
+      <nav className="bg-white shadow-lg sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex justify-between items-center py-4">
-            <div className="text-2xl font-bold text-blue-600">LMS Platform</div>
+            <div className="text-2xl font-bold text-blue-600">Math IGCSE Pro</div>
             <div className="flex space-x-4">
               <a href="#features" className="hover:text-blue-600">
                 Features
               </a>
-              <a href="#testimonials" className="hover:text-blue-600">
-                Testimonials
+              <a href="#stats" className="hover:text-blue-600">
+                Stats
               </a>
-              <a href="#pricing" className="hover:text-blue-600">
-                Pricing
+              <a href="#team" className="hover:text-blue-600">
+                Team
               </a>
               <a
                 href="/login"
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300"
               >
                 Login
+              </a>
+              <a
+                href="/register"
+                className="bg-transparent border border-blue-600 text-blue-600 px-4 py-2 rounded-md hover:bg-blue-600 hover:text-white transition duration-300"
+              >
+                Register
               </a>
             </div>
           </div>
@@ -30,28 +37,39 @@ const LandingPage = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="bg-blue-600 text-white py-20">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-5xl font-bold mb-6">
-            Welcome to the Future of Learning
-          </h1>
-          <p className="text-xl mb-8">
-            Join us to let us help you achieve the top Grades using our LMS platform to
-            transform education.
-          </p>
-          <div className="space-x-4">
-            <a
-              href="/signup"
-              className="bg-white text-blue-600 px-6 py-3 rounded-md font-semibold hover:bg-gray-100"
-            >
-              Get Started
-            </a>
-            <a
-              href="#features"
-              className="bg-transparent border border-white px-6 py-3 rounded-md font-semibold hover:bg-white hover:text-blue-600"
-            >
-              Learn More
-            </a>
+      <section className="py-20 bg-white text-gray-900">
+        <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center">
+          {/* Text Half */}
+          <div className="md:w-1/2 text-center md:text-left mb-8 md:mb-0">
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">
+              Master Math IGCSE with Confidence
+            </h1>
+            <p className="text-lg md:text-xl mb-8">
+              Unlock your potential with our comprehensive platform designed to help you ace your Math IGCSE exams.
+            </p>
+            <div className="space-x-4">
+              <a
+                href="/signup"
+                className="bg-blue-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-blue-700 transition duration-300"
+              >
+                Get Started
+              </a>
+              <a
+                href="#features"
+                className="bg-transparent border border-blue-600 text-blue-600 px-6 py-3 rounded-md font-semibold hover:bg-blue-600 hover:text-white transition duration-300"
+              >
+                Learn More
+              </a>
+            </div>
+          </div>
+
+          {/* Image Half */}
+          <div className="md:w-1/2 flex justify-center">
+            <img
+              src={teamImage}
+              alt="Team Graphic"
+              className="w-full max-w-md"
+            />
           </div>
         </div>
       </section>
@@ -59,10 +77,10 @@ const LandingPage = () => {
       {/* Features Section */}
       <section id="features" className="py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Features</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">Why Choose Us?</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Feature 1 */}
-            <div className="text-center">
+            <div className="text-center bg-gray-50 p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
               <div className="bg-blue-100 text-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg
                   className="w-8 h-8"
@@ -79,14 +97,14 @@ const LandingPage = () => {
                   ></path>
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Materials </h3>
+              <h3 className="text-xl font-semibold mb-2">Comprehensive Materials</h3>
               <p className="text-gray-600">
-                Engage with needed materials.
+                Access past papers, video tutorials, and interactive problem-solving tools.
               </p>
             </div>
 
             {/* Feature 2 */}
-            <div className="text-center">
+            <div className="text-center bg-gray-50 p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
               <div className="bg-blue-100 text-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg
                   className="w-8 h-8"
@@ -103,14 +121,14 @@ const LandingPage = () => {
                   ></path>
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Teachers</h3>
+              <h3 className="text-xl font-semibold mb-2">Expert Teachers</h3>
               <p className="text-gray-600">
-                Learn from Teachers with years of experience.
+                Learn from experienced Math IGCSE teachers with proven track records.
               </p>
             </div>
 
             {/* Feature 3 */}
-            <div className="text-center">
+            <div className="text-center bg-gray-50 p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
               <div className="bg-blue-100 text-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg
                   className="w-8 h-8"
@@ -127,93 +145,104 @@ const LandingPage = () => {
                   ></path>
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Keep up</h3>
+              <h3 className="text-xl font-semibold mb-2">Real-Time Progress Tracking</h3>
               <p className="text-gray-600">
-                Keep up with the student updates. Homeworks, Exams Grades and Announcemnets. 
+                Track your progress with homework, exam grades, and announcements.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section id="testimonials" className="py-20 bg-gray-100">
+      {/* Statistics Section */}
+      <section id="stats" className="py-20 bg-gray-100">
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Testimonials</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Testimonial 1 */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <p className="text-gray-600 mb-4">
-                "This platform has completely transformed the way I learn. Highly
-                recommended!"
-              </p>
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-                  <span className="text-blue-600 font-bold">A</span>
-                </div>
-                <div>
-                  <h4 className="font-semibold">Alice Johnson</h4>
-                  <p className="text-sm text-gray-500">Student</p>
-                </div>
-              </div>
+          <h2 className="text-3xl font-bold text-center mb-12">Trusted By</h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
+            {/* Stat 1 */}
+            <div>
+              <h3 className="text-5xl font-bold text-blue-600">15+</h3>
+              <p className="text-gray-600">Schools trusting us</p>
             </div>
-
-            {/* Testimonial 2 */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <p className="text-gray-600 mb-4">
-                "The courses are well-structured and easy to follow. Great job!"
-              </p>
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-                  <span className="text-blue-600 font-bold">B</span>
-                </div>
-                <div>
-                  <h4 className="font-semibold">Bob Smith</h4>
-                  <p className="text-sm text-gray-500">Educator</p>
-                </div>
-              </div>
+            {/* Stat 2 */}
+            <div>
+              <h3 className="text-5xl font-bold text-blue-600">10k+</h3>
+              <p className="text-gray-600">Students joined</p>
             </div>
-
-            {/* Testimonial 3 */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <p className="text-gray-600 mb-4">
-                "I love the flexibility and the quality of the content."
-              </p>
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-                  <span className="text-blue-600 font-bold">C</span>
-                </div>
-                <div>
-                  <h4 className="font-semibold">Charlie Brown</h4>
-                  <p className="text-sm text-gray-500">Student</p>
-                </div>
-              </div>
+            {/* Stat 3 */}
+            <div>
+              <h3 className="text-5xl font-bold text-blue-600">100+</h3>
+              <p className="text-gray-600">Dedicated assistants</p>
+            </div>
+            {/* Stat 4 */}
+            <div>
+              <h3 className="text-5xl font-bold text-blue-600">80%</h3>
+              <p className="text-gray-600">Scored A or higher</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Call-to-Action Section */}
-      <section className="bg-blue-600 text-white py-20">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-6">Ready to Get Started?</h2>
-          <p className="text-xl mb-8">
-            Join our platform today and take the first step towards achieving your
-            learning goals.
-          </p>
-          <a
-            href="/signup"
-            className="bg-white text-blue-600 px-6 py-3 rounded-md font-semibold hover:bg-gray-100"
-          >
-            Sign Up Now
-          </a>
+      {/* Team Section */}
+      <section id="team" className="py-20 bg-white">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12">Our Team</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Team Member 1 */}
+            <div className="bg-gray-50 p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+              <div className="w-32 h-32 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <span className="text-blue-600 text-4xl font-bold">J</span>
+              </div>
+              <h3 className="text-xl font-semibold text-center mb-2">John Doe</h3>
+              <p className="text-gray-600 text-center">Math IGCSE Expert</p>
+              <p className="text-gray-600 text-center mt-4">
+                With over a decade of experience, John specializes in making complex topics easy to understand.
+              </p>
+            </div>
+            {/* Team Member 2 */}
+            <div className="bg-gray-50 p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+              <div className="w-32 h-32 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <span className="text-blue-600 text-4xl font-bold">S</span>
+              </div>
+              <h3 className="text-xl font-semibold text-center mb-2">Sarah Smith</h3>
+              <p className="text-gray-600 text-center">Head of Theory</p>
+              <p className="text-gray-600 text-center mt-4">
+                Sarah focuses on breaking down theoretical concepts into digestible lessons.
+              </p>
+            </div>
+            {/* Team Member 3 */}
+            <div className="bg-gray-50 p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+              <div className="w-32 h-32 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <span className="text-blue-600 text-4xl font-bold">M</span>
+              </div>
+              <h3 className="text-xl font-semibold text-center mb-2">Mike Johnson</h3>
+              <p className="text-gray-600 text-center">Head of Practical</p>
+              <p className="text-gray-600 text-center mt-4">
+                Mike is passionate about practical problem-solving and exam preparation.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
       <footer className="bg-gray-800 text-white py-8">
         <div className="max-w-6xl mx-auto px-4 text-center">
-          <p>&copy; 2023 LMS Platform. All rights reserved.</p>
+          <p>&copy; 2023 Math IGCSE Pro. All rights reserved.</p>
+          <div className="mt-4 space-x-4">
+            <button
+              onClick={() => window.open("https://facebook.com", "_blank")}
+              className="hover:text-blue-600"
+            >
+              Facebook
+            </button>
+            <button
+              onClick={() => window.open("https://instagram.com", "_blank")}
+              className="hover:text-blue-600"
+            >
+              Instagram
+            </button>
+          </div>
         </div>
       </footer>
     </div>
