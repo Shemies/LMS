@@ -33,11 +33,12 @@ const AdminLayout = () => {
             { name: "Homeworks", path: "/admin/homeworks" },
             { name: "Exams", path: "/admin/exams" },
             { name: "Past Papers", path: "/admin/pastpapers" },
+            { name: "Registeration Requests", path: "/admin/registration-requests" },
           ].map((item) => (
             <li key={item.name}>
               <Link
                 to={item.path}
-                className="block w-full p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition duration-200"
+                className="block w-full p-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition duration-200"
                 onClick={() => setSidebarOpen(false)}
               >
                 {item.name}

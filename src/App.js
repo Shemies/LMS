@@ -25,6 +25,7 @@ import AdminExamGrades from "./AdminExams";
 import AdminDashboard from "./AdminDashboard";
 import LandingPage from "./LandingPage";
 import RegistrationPage from "./Registeration";
+import RegistrationRequests from "./RegistrationRequests";
 
 function App() {
   return (
@@ -64,6 +65,7 @@ function App() {
               <Route path="homeworks" element={<AdminHomeworks />} />
               <Route path="pastpapers" element={<AdminPastPapers />} />
               <Route path="exams" element={<AdminExamGrades />} />
+              <Route path="registration-requests" element={<RegistrationRequests />} />
             </Route>
           </Routes>
         </Router>

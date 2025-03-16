@@ -8,17 +8,8 @@ const LandingPage = () => {
       <nav className="bg-white shadow-lg sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex justify-between items-center py-4">
-            <div className="text-2xl font-bold text-blue-600">Math IGCSE Pro</div>
+            <div className="text-2xl font-bold text-blue-600">Math IGCSE</div>
             <div className="flex space-x-4">
-              <a href="#features" className="hover:text-blue-600">
-                Features
-              </a>
-              <a href="#stats" className="hover:text-blue-600">
-                Stats
-              </a>
-              <a href="#team" className="hover:text-blue-600">
-                Team
-              </a>
               <a
                 href="/login"
                 className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300"
@@ -194,9 +185,9 @@ const LandingPage = () => {
                 <span className="text-blue-600 text-4xl font-bold">J</span>
               </div>
               <h3 className="text-xl font-semibold text-center mb-2">John Doe</h3>
-              <p className="text-gray-600 text-center">Math IGCSE Expert</p>
+              <p className="text-gray-600 text-center">Math IGCSE Teacher</p>
               <p className="text-gray-600 text-center mt-4">
-                With over a decade of experience, John specializes in making complex topics easy to understand.
+                With over a two decade of experience, he specializes in making complex topics easy to understand.
               </p>
             </div>
             {/* Team Member 2 */}
@@ -205,9 +196,9 @@ const LandingPage = () => {
                 <span className="text-blue-600 text-4xl font-bold">S</span>
               </div>
               <h3 className="text-xl font-semibold text-center mb-2">Sarah Smith</h3>
-              <p className="text-gray-600 text-center">Head of Theory</p>
+              <p className="text-gray-600 text-center">Math Co-Teacher</p>
               <p className="text-gray-600 text-center mt-4">
-                Sarah focuses on breaking down theoretical concepts into digestible lessons.
+                He focuses on breaking down theoretical concepts into digestible lessons.
               </p>
             </div>
             {/* Team Member 3 */}
@@ -216,9 +207,9 @@ const LandingPage = () => {
                 <span className="text-blue-600 text-4xl font-bold">M</span>
               </div>
               <h3 className="text-xl font-semibold text-center mb-2">Mike Johnson</h3>
-              <p className="text-gray-600 text-center">Head of Practical</p>
+              <p className="text-gray-600 text-center">MAth Co-Teacher</p>
               <p className="text-gray-600 text-center mt-4">
-                Mike is passionate about practical problem-solving and exam preparation.
+                He is passionate about practical problem-solving and exam preparation.
               </p>
             </div>
           </div>
