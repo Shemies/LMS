@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Menu,
   X,
@@ -10,17 +10,18 @@ import {
   ClipboardList,
   BookOpen,
   File,
-} from "lucide-react"; // Icons for menu and profile
+  LogOut,
+} from "lucide-react"; // Added LogOut icon
 import logo from "./assets/lms-logo.png"; // Ensure the logo is in src/assets/
 import { auth, db, ref, onValue, query, orderByChild, equalTo } from "./firebase"; // Import Firebase Auth
-import { onAuthStateChanged } from "firebase/auth"; // Import auth state listener
+import { onAuthStateChanged, signOut } from "firebase/auth"; // Import auth state listener and signOut
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [username, setUsername] = useState("Loading...");
   const [studentId, setStudentId] = useState("Loading...");
-  const [initials, setInitials] = useState(""); 
-
+  const [initials, setInitials] = useState("");
+  const navigate = useNavigate(); // Use navigate for redirecting after logout
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -32,10 +33,11 @@ const Layout = ({ children }) => {
         onValue(userQuery, (snapshot) => {
           if (snapshot.exists()) {
             const userData = Object.values(snapshot.val())[0]; // Get the first matching user
-            const fullName = userData.name;const nameParts = fullName.split(" ");
+            const fullName = userData.name;
+            const nameParts = fullName.split(" ");
             const firstName = nameParts[0]; // Extract first name
             const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : ""; // Get last name if available
-            
+
             setUsername(firstName);
             setStudentId(userData.studentId || "Unknown ID"); // Ensure a fallback if studentId is missing
             const initials = `${firstName.charAt(0)}${lastName ? lastName.charAt(0) : ""}`;
@@ -53,6 +55,17 @@ const Layout = ({ children }) => {
 
     return () => unsubscribe(); // Cleanup on unmount
   }, []);
+
+  // Function to handle logout
+  const handleLogout = async () => {
+    try {
+      await signOut(auth); // Sign out the user
+      navigate("/login"); // Redirect to the login page
+    } catch (error) {
+      console.error("Error logging out: ", error);
+      alert("Error logging out. Please try again.");
+    }
+  };
 
   return (
     <div className="flex bg-gray-900 text-white min-h-screen">
@@ -94,6 +107,17 @@ const Layout = ({ children }) => {
             </li>
           ))}
         </ul>
+
+        {/* Logout Button */}
+        <div className="mt-6">
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full p-3 bg-red-600 rounded-lg hover:bg-red-700 transition duration-200"
+          >
+            <LogOut size={20} className="mr-3" />
+            Logout
+          </button>
+        </div>
       </div>
 
       {/* Main Content Wrapper */}
@@ -112,11 +136,11 @@ const Layout = ({ children }) => {
           <div className="flex items-center space-x-3 ml-auto">
             <Link
               to="/profile"
-              className="flex items-center space-x-3 cursor-pointer "
+              className="flex items-center space-x-3 cursor-pointer"
             >
               {/* Profile Icon with Initial */}
               <div className="w-8 h-8 bg-gray-200 text-black capitalize rounded-full flex items-center justify-center text-sm font-bold">
-              {initials}
+                {initials}
               </div>
               <span className="text-lg capitalize font-semibold">
                 {username} ({studentId})

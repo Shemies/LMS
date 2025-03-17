@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { ref, get } from "firebase/database";
 import { useAuth } from "./AuthContext";
+import Navbar from "./Navbar"; // Import the Navbar component
+import Footer from "./Footer"; // Import the Footer component
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -81,52 +83,58 @@ const Login = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6">
-        <h2 className="text-2xl font-semibold text-center text-gray-800">Login</h2>
+    <div className="font-sans bg-gray-50 text-gray-900">
+      <Navbar /> {/* Include the Navbar component */}
 
-        {error && <p className="mt-4 text-sm text-red-600 text-center">{error}</p>}
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6">
+          <h2 className="text-2xl font-semibold text-center text-gray-800">Login</h2>
 
-        <form onSubmit={handleLogin} className="mt-6">
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-600">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              className="w-full mt-2 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              required
-            />
-          </div>
+          {error && <p className="mt-4 text-sm text-red-600 text-center">{error}</p>}
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-600">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              className="w-full mt-2 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              required
-            />
-          </div>
+          <form onSubmit={handleLogin} className="mt-6">
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-600">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="w-full mt-2 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                required
+              />
+            </div>
 
-          <button
-            type="submit"
-            className="w-full bg-blue-500 text-white font-semibold py-2 rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition disabled:opacity-50"
-            disabled={loading}
-          >
-            {loading ? "Logging in..." : "Login"}
-          </button>
-        </form>
-        <p className="mt-4 text-center">
-          Don't have an account?{" "}
-          <Link to="/signup" className="text-blue-500 hover:underline">
-            Sign Up
-          </Link>
-        </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-600">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                className="w-full mt-2 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-blue-500 text-white font-semibold py-2 rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition disabled:opacity-50"
+              disabled={loading}
+            >
+              {loading ? "Logging in..." : "Login"}
+            </button>
+          </form>
+          <p className="mt-4 text-center">
+            Don't have an account?{" "}
+            <Link to="/signup" className="text-blue-500 hover:underline">
+              Sign Up
+            </Link>
+          </p>
+        </div>
       </div>
+
+      <Footer /> {/* Include the Footer component */}
     </div>
   );
 };

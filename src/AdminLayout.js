@@ -45,6 +45,10 @@ const AdminLayout = () => {
               </Link>
             </li>
           ))}
+          <li>
+            <Link to="/logout" className="block w-full p-2 bg-red-900 rounded-lg hover:bg-red-600 transition duration-200" onClick={() => setSidebarOpen(false)}>
+            Logout</Link>
+          </li>
         </ul>
       </div>
 
