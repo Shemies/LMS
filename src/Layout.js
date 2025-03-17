@@ -150,7 +150,7 @@ const Layout = ({ children }) => {
         </div>
 
         {/* Page Content with Top Padding (to avoid overlapping) */}
-        <div className="p-6 bg-gray-200 min-h-screen pt-16">{children}</div>
+        <div className="p-6 mt-6 bg-gray-200 min-h-screen pt-16">{children}</div>
       </div>
     </div>
   );

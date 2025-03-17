@@ -127,38 +127,43 @@ const MarkSchemes = () => {
         <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Chapters</h3>
 
         {Object.keys(markSchemes).length > 0 ? (
-          Object.entries(markSchemes).map(([chapter, pdfs]) => (
-            <div key={chapter} className="mb-6">
-              {/* Chapter Title (Clickable to toggle visibility) */}
-              <div
-                className="flex justify-between items-center cursor-pointer"
-                onClick={() => toggleChapter(chapter)}
-              >
-                <h4 className="text-md font-bold text-[#1E293B]">{chapter}</h4>
-                <span className="text-gray-600">
-                  {activeChapter === chapter ? "▲" : "▼"}
-                </span>
-              </div>
+          Object.entries(markSchemes).map(([chapter, pdfs]) => {
+            // Convert pdfs object to an array if it's not already an array
+            const pdfList = Array.isArray(pdfs) ? pdfs : Object.values(pdfs);
 
-              {/* PDF List (Visible only if active) */}
-              {activeChapter === chapter && (
-                <ul className="space-y-2 mt-2">
-                  {pdfs.map((pdf, index) => (
-                    <li key={index} className="p-3 bg-gray-100 rounded-lg">
-                      <a
-                        href={pdf.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
-                      >
-                        {pdf.name}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          ))
+            return (
+              <div key={chapter} className="mb-6">
+                {/* Chapter Title (Clickable to toggle visibility) */}
+                <div
+                  className="flex justify-between items-center cursor-pointer"
+                  onClick={() => toggleChapter(chapter)}
+                >
+                  <h4 className="text-md font-bold text-[#1E293B]">{chapter}</h4>
+                  <span className="text-gray-600">
+                    {activeChapter === chapter ? "▲" : "▼"}
+                  </span>
+                </div>
+
+                {/* PDF List (Visible only if active) */}
+                {activeChapter === chapter && (
+                  <ul className="space-y-2 mt-2">
+                    {pdfList.map((pdf, index) => (
+                      <li key={index} className="p-3 bg-gray-100 rounded-lg">
+                        <a
+                          href={pdf.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          {pdf.name}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            );
+          })
         ) : (
           <p className="text-gray-500">
             No mark schemes available for the enrolled course. Please check back later.
