@@ -130,11 +130,11 @@ const Chapters = () => {
 
   return (
     <Layout>
-      <h1 className="text-3xl font-bold text-white mb-6">Chapters</h1>
+      <h1 className="text-3xl font-bold text-black mb-6">Chapters</h1>
 
       {/* Progress Bar */}
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-white mb-2">Syllabus Progress</h3>
+        <h3 className="text-lg font-semibold text-black mb-2">Syllabus Progress</h3>
         <div className="w-full bg-gray-300 rounded-full h-6 relative">
           <div
             className="h-6 bg-blue-600 rounded-full transition-all duration-500 ease-in-out"
@@ -153,7 +153,7 @@ const Chapters = () => {
           {chapters.map((chapter) => (
             <li
               key={chapter.id}
-              className="flex justify-between items-center p-3 bg-gray-100 rounded-lg"
+              className="flex justify-between items-center p-3 bg-gray-200 rounded-lg"
             >
               <span className="font-semibold text-[#1E293B]">{chapter.name}</span>
               <span

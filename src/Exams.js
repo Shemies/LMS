@@ -58,13 +58,13 @@ const Exams = () => {
 
   return (
     <Layout username={username}>
-      <h1 className="text-3xl font-bold mb-6 text-white">Exams & Grades</h1>
+      <h1 className="text-3xl font-bold mb-6 text-black">Exams Grades</h1>
 
       {exams.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-md text-sm sm:text-base">
             <thead>
-              <tr className="bg-gray-200 text-xs sm:text-base">
+              <tr className="bg-gray-600 text-xs sm:text-base">
                 <th className="py-2 px-3 sm:py-3 sm:px-6 text-left">Exam</th>
                 <th className="py-2 px-3 sm:py-3 sm:px-6 text-center">Score</th>
                 <th className="py-2 px-3 sm:py-3 sm:px-6 text-center">Total</th>

@@ -68,15 +68,15 @@ const Layout = ({ children }) => {
   };
 
   return (
-    <div className="flex bg-gray-900 text-white min-h-screen">
+    <div className="flex bg-gray-300 text-white min-h-screen">
       {/* Sidebar - Hidden on small screens */}
       <div
-        className={`fixed top-0 left-0 h-full w-64 bg-gray-800 p-5 shadow-lg transition-transform duration-300 z-50 ${
+        className={`fixed top-0 left-0 h-full w-64 bg-white p-5 transition-transform duration-300 z-50 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-64"
         } sm:translate-x-0 sm:w-1/4`}
       >
         <div className="mb-6 flex justify-between items-center">
-          <img src={logo} alt="LMS Logo" className="h-12" />
+          <img src={logo} alt="LMS Logo" className="h-20" href="/" />
           {/* Close Button on Mobile */}
           <button
             className="sm:hidden text-gray-400 hover:text-white"
@@ -92,13 +92,13 @@ const Layout = ({ children }) => {
             { name: "Videos", path: "/videos", icon: <Video size={20} /> },
             { name: "Mark Schemes", path: "/markschemes", icon: <FileText size={20} /> },
             { name: "Homeworks", path: "/homeworks", icon: <ClipboardList size={20} /> },
-            { name: "Exams", path: "/exams", icon: <BookOpen size={20} /> },
+            { name: "Exams Grades", path: "/exams", icon: <BookOpen size={20} /> },
             { name: "Past Papers", path: "/pastpapers", icon: <File size={20} /> },
           ].map((item) => (
             <li key={item.name}>
               <Link
                 to={item.path}
-                className="flex items-center w-full p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition duration-200"
+                className="flex items-center w-full p-3 bg-gray-300 text-black rounded-lg hover:bg-gray-400 transition duration-200"
                 onClick={() => setSidebarOpen(false)} // Close sidebar on mobile click
               >
                 <span className="mr-3">{item.icon}</span>
@@ -123,10 +123,10 @@ const Layout = ({ children }) => {
       {/* Main Content Wrapper */}
       <div className="flex flex-col w-full sm:ml-[25%]">
         {/* Fixed Top Navbar */}
-        <div className="fixed top-0 left-0 w-full bg-gray-800 p-4 shadow-md flex justify-between items-center z-40 sm:pl-[25%]">
+        <div className="fixed top-0 left-0 w-full bg-white p-4 shadow-md flex justify-between items-center z-40 sm:pl-[25%]">
           {/* Menu Button for Mobile */}
           <button
-            className="sm:hidden text-gray-400 hover:text-white"
+            className="sm:hidden text-black hover:text-white"
             onClick={() => setSidebarOpen(true)}
           >
             <Menu size={24} />
@@ -139,10 +139,10 @@ const Layout = ({ children }) => {
               className="flex items-center space-x-3 cursor-pointer"
             >
               {/* Profile Icon with Initial */}
-              <div className="w-8 h-8 bg-gray-200 text-black capitalize rounded-full flex items-center justify-center text-sm font-bold">
+              <div className="w-8 h-8 bg-blue-700 text-white capitalize rounded-full flex items-center justify-center text-sm font-bold">
                 {initials}
               </div>
-              <span className="text-lg capitalize font-semibold">
+              <span className="text-lg capitalize text-black font-semibold">
                 {username} ({studentId})
               </span>
             </Link>
@@ -150,7 +150,7 @@ const Layout = ({ children }) => {
         </div>
 
         {/* Page Content with Top Padding (to avoid overlapping) */}
-        <div className="p-6 bg-gray-700 min-h-screen pt-16">{children}</div>
+        <div className="p-6 bg-gray-200 min-h-screen pt-16">{children}</div>
       </div>
     </div>
   );

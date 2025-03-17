@@ -121,7 +121,7 @@ const MarkSchemes = () => {
 
   return (
     <Layout>
-      <h1 className="text-3xl font-bold text-white mb-6">Mark Schemes</h1>
+      <h1 className="text-3xl font-bold text-black mb-6">Mark Schemes</h1>
 
       <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 w-[80%] mx-auto">
         <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Chapters</h3>

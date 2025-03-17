@@ -95,7 +95,7 @@ const PastPapers = () => {
 
   return (
     <Layout>
-      <h1 className="text-3xl font-bold text-white mb-6">Past Papers</h1>
+      <h1 className="text-3xl font-bold text-black mb-6">Past Papers</h1>
 
       <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 w-[90%] sm:w-[80%] mx-auto">
         {Object.keys(pastPapers)

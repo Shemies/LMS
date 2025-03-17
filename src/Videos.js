@@ -140,6 +140,8 @@ const Videos = () => {
 
   return (
     <Layout>
+      <h1 className="text-3xl font-bold text-black mb-6">Videos</h1>
+
       {/* Search Bar */}
       <div className="container mx-auto px-4 mt-8">
         <input

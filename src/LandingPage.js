@@ -8,17 +8,17 @@ const LandingPage = () => {
       <nav className="bg-white shadow-lg sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex justify-between items-center py-4">
-            <div className="text-2xl font-bold text-blue-600">Math IGCSE</div>
+            <div className="text-2xl font-bold text-blue-900">Math IGCSE</div>
             <div className="flex space-x-4">
               <a
                 href="/login"
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300"
+                className="bg-blue-900 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300"
               >
                 Login
               </a>
               <a
                 href="/register"
-                className="bg-transparent border border-blue-600 text-blue-600 px-4 py-2 rounded-md hover:bg-blue-600 hover:text-white transition duration-300"
+                className="bg-transparent border border-blue-900 text-blue-900 px-4 py-2 rounded-md hover:bg-blue-900 hover:text-white transition duration-300"
               >
                 Register
               </a>
@@ -40,14 +40,14 @@ const LandingPage = () => {
             </p>
             <div className="space-x-4">
               <a
-                href="/signup"
-                className="bg-blue-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-blue-700 transition duration-300"
+                href="/register"
+                className="bg-blue-900 text-white px-6 py-3 rounded-md font-semibold hover:bg-blue-700 transition duration-300"
               >
                 Get Started
               </a>
               <a
                 href="#features"
-                className="bg-transparent border border-blue-600 text-blue-600 px-6 py-3 rounded-md font-semibold hover:bg-blue-600 hover:text-white transition duration-300"
+                className="bg-transparent border border-blue-900 text-blue-900 px-6 py-3 rounded-md font-semibold hover:bg-blue-900 hover:text-white transition duration-300"
               >
                 Learn More
               </a>
@@ -66,13 +66,13 @@ const LandingPage = () => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 bg-white">
+      <section id="features" className="py-20 bg-blue-900">
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Why Choose Us?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <h2 className="text-3xl font-bold text-center mb-12 text-gray-100" >Why Choose Us?</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 ">
             {/* Feature 1 */}
-            <div className="text-center bg-gray-50 p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
-              <div className="bg-blue-100 text-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="text-center bg-gray-50 p-6 rounded-lg shadow-md transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
+              <div className="bg-blue-100 text-blue-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg
                   className="w-8 h-8"
                   fill="none"
@@ -95,8 +95,8 @@ const LandingPage = () => {
             </div>
 
             {/* Feature 2 */}
-            <div className="text-center bg-gray-50 p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
-              <div className="bg-blue-100 text-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="text-center bg-gray-50 p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300 transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
+              <div className="bg-blue-100 text-blue-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg
                   className="w-8 h-8"
                   fill="none"
@@ -119,8 +119,8 @@ const LandingPage = () => {
             </div>
 
             {/* Feature 3 */}
-            <div className="text-center bg-gray-50 p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
-              <div className="bg-blue-100 text-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="text-center bg-gray-50 p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300 transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
+              <div className="bg-blue-100 text-blue-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg
                   className="w-8 h-8"
                   fill="none"
@@ -152,22 +152,22 @@ const LandingPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
             {/* Stat 1 */}
             <div>
-              <h3 className="text-5xl font-bold text-blue-600">15+</h3>
+              <h3 className="text-5xl font-bold text-blue-900">15+</h3>
               <p className="text-gray-600">Schools trusting us</p>
             </div>
             {/* Stat 2 */}
             <div>
-              <h3 className="text-5xl font-bold text-blue-600">10k+</h3>
+              <h3 className="text-5xl font-bold text-blue-900">10k+</h3>
               <p className="text-gray-600">Students joined</p>
             </div>
             {/* Stat 3 */}
             <div>
-              <h3 className="text-5xl font-bold text-blue-600">100+</h3>
+              <h3 className="text-5xl font-bold text-blue-900">100+</h3>
               <p className="text-gray-600">Dedicated assistants</p>
             </div>
             {/* Stat 4 */}
             <div>
-              <h3 className="text-5xl font-bold text-blue-600">80%</h3>
+              <h3 className="text-5xl font-bold text-blue-900">80%</h3>
               <p className="text-gray-600">Scored A or higher</p>
             </div>
           </div>
@@ -182,7 +182,7 @@ const LandingPage = () => {
             {/* Team Member 1 */}
             <div className="bg-gray-50 p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
               <div className="w-32 h-32 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <span className="text-blue-600 text-4xl font-bold">J</span>
+                <span className="text-blue-900 text-4xl font-bold">J</span>
               </div>
               <h3 className="text-xl font-semibold text-center mb-2">John Doe</h3>
               <p className="text-gray-600 text-center">Math IGCSE Teacher</p>
@@ -193,7 +193,7 @@ const LandingPage = () => {
             {/* Team Member 2 */}
             <div className="bg-gray-50 p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
               <div className="w-32 h-32 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <span className="text-blue-600 text-4xl font-bold">S</span>
+                <span className="text-blue-900 text-4xl font-bold">S</span>
               </div>
               <h3 className="text-xl font-semibold text-center mb-2">Sarah Smith</h3>
               <p className="text-gray-600 text-center">Math Co-Teacher</p>
@@ -204,7 +204,7 @@ const LandingPage = () => {
             {/* Team Member 3 */}
             <div className="bg-gray-50 p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
               <div className="w-32 h-32 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <span className="text-blue-600 text-4xl font-bold">M</span>
+                <span className="text-blue-900 text-4xl font-bold">M</span>
               </div>
               <h3 className="text-xl font-semibold text-center mb-2">Mike Johnson</h3>
               <p className="text-gray-600 text-center">MAth Co-Teacher</p>
@@ -223,13 +223,13 @@ const LandingPage = () => {
           <div className="mt-4 space-x-4">
             <button
               onClick={() => window.open("https://facebook.com", "_blank")}
-              className="hover:text-blue-600"
+              className="hover:text-blue-900"
             >
               Facebook
             </button>
             <button
               onClick={() => window.open("https://instagram.com", "_blank")}
-              className="hover:text-blue-600"
+              className="hover:text-blue-900"
             >
               Instagram
             </button>

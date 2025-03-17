@@ -131,7 +131,7 @@ const Homeworks = () => {
 
   return (
     <Layout>
-      <h1 className="text-3xl font-bold mb-6 text-white">Homeworks</h1>
+      <h1 className="text-3xl font-bold mb-6 text-black">Homeworks</h1>
 
       <div className="space-y-4">
         {homeworks.length > 0 ? (
@@ -139,11 +139,11 @@ const Homeworks = () => {
             <div
               key={hw.id}
               className={`p-5 rounded-lg border ${
-                hw.dueDate < today ? "bg-red-900 text-white" : "bg-gray-800 text-white"
+                hw.dueDate < today ? "bg-red-900 text-white" : "bg-gray-400 text-black"
               }`}
             >
               <h2 className="text-xl font-semibold">{hw.title}</h2>
-              <p className="text-gray-300">{hw.description}</p>
+              <p className="text-white">{hw.description}</p>
               <p className="mt-2 font-medium">
                 Due Date: <span className="text-yellow-400">{hw.dueDate}</span>
               </p>
