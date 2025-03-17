@@ -131,7 +131,7 @@ const Layout = ({ children }) => {
           >
             <Menu size={24} />
           </button>
-          <img src={logo} alt="LMS Logo" className="h-8 md:hidden lg:hidden" />
+          <img src={logo} alt="LMS Logo" className="h-12 md:hidden lg:hidden" />
           {/* Profile Section - Aligned to the Right */}
           <div className="flex items-center space-x-3 ml-auto">
             <Link
