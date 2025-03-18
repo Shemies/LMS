@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { db } from "./firebase"; // Import Firebase Realtime Database
 import { ref, push } from "firebase/database";
 import teamImage from "./20944338.jpg"; // Import the graphic image
+import Navbar from "./Navbar"; // Import the Navbar component
+import Footer from "./Footer"; // Import the Footer component
 
 const RegistrationPage = () => {
   const [formData, setFormData] = useState({
@@ -15,7 +17,6 @@ const RegistrationPage = () => {
     course: "",
     board: "",
     status: "registered",
-
   });
 
   const handleChange = (e) => {
@@ -51,27 +52,7 @@ const RegistrationPage = () => {
   return (
     <div className="font-sans bg-gray-50 text-gray-900">
       {/* Navbar */}
-      <nav className="bg-white shadow-lg sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex justify-between items-center py-4">
-            <div className="text-2xl font-bold text-blue-600">Math IGCSE</div>
-            <div className="flex space-x-4">
-              <a
-                href="/login"
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300"
-              >
-                Login
-              </a>
-              <a
-                href="/register"
-                className="bg-transparent border border-blue-600 text-blue-600 px-4 py-2 rounded-md hover:bg-blue-600 hover:text-white transition duration-300"
-              >
-                Register
-              </a>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Hero Section */}
       <section className="py-20 bg-white text-gray-900">
@@ -87,7 +68,7 @@ const RegistrationPage = () => {
 
           {/* Form Section */}
           <div className="md:w-1/2 md:pl-8">
-            <h2 className="text-3xl font-bold text-center mb-8 text-blue-600">
+            <h2 className="text-3xl font-bold text-center mb-8 text-blue-900">
               Registration Form
             </h2>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -99,7 +80,7 @@ const RegistrationPage = () => {
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-black"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent text-black"
                   placeholder="Enter your full name"
                   required
                 />
@@ -116,7 +97,7 @@ const RegistrationPage = () => {
                       value="Male"
                       checked={formData.gender === "Male"}
                       onChange={handleChange}
-                      className="form-radio h-4 w-4 text-blue-600"
+                      className="form-radio h-4 w-4 text-blue-900"
                       required
                     />
                     <span className="ml-2 text-gray-700">Male</span>
@@ -128,7 +109,7 @@ const RegistrationPage = () => {
                       value="Female"
                       checked={formData.gender === "Female"}
                       onChange={handleChange}
-                      className="form-radio h-4 w-4 text-blue-600"
+                      className="form-radio h-4 w-4 text-blue-900"
                       required
                     />
                     <span className="ml-2 text-gray-700">Female</span>
@@ -144,7 +125,7 @@ const RegistrationPage = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-black"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent text-black"
                   placeholder="Enter your email address"
                   required
                 />
@@ -158,7 +139,7 @@ const RegistrationPage = () => {
                   name="school"
                   value={formData.school}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-black"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent text-black"
                   placeholder="Enter your school name"
                   required
                 />
@@ -172,7 +153,7 @@ const RegistrationPage = () => {
                   name="country"
                   value={formData.country}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-black"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent text-black"
                   placeholder="Enter your country"
                   required
                 />
@@ -186,7 +167,7 @@ const RegistrationPage = () => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-black"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent text-black"
                   placeholder="Enter your phone number"
                   required
                 />
@@ -200,7 +181,7 @@ const RegistrationPage = () => {
                   name="parentPhone"
                   value={formData.parentPhone}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-black"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent text-black"
                   placeholder="Enter parent's phone number"
                   required
                 />
@@ -213,7 +194,7 @@ const RegistrationPage = () => {
                   name="course"
                   value={formData.course}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-black"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent text-black"
                   required
                 >
                   <option value="" disabled>Select Course</option>
@@ -230,7 +211,7 @@ const RegistrationPage = () => {
                   name="board"
                   value={formData.board}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-black"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent text-black"
                   required
                 >
                   <option value="" disabled>Select Board</option>
@@ -243,7 +224,7 @@ const RegistrationPage = () => {
               <div>
                 <button
                   type="submit"
-                  className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition duration-300"
+                  className="w-full bg-blue-900 text-white px-4 py-3 rounded-lg hover:bg-blue-800 transition duration-300"
                 >
                   Submit
                 </button>
@@ -254,25 +235,7 @@ const RegistrationPage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-800 text-white py-8">
-        <div className="max-w-6xl mx-auto px-4 text-center">
-          <p>&copy; 2023 Math IGCSE Pro. All rights reserved.</p>
-          <div className="mt-4 space-x-4">
-            <button
-              onClick={() => window.open("https://facebook.com", "_blank")}
-              className="hover:text-blue-600"
-            >
-              Facebook
-            </button>
-            <button
-              onClick={() => window.open("https://instagram.com", "_blank")}
-              className="hover:text-blue-600"
-            >
-              Instagram
-            </button>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

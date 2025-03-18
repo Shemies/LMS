@@ -1,31 +1,28 @@
 import React from "react";
-import teamImage from "./20944338.jpg"; // Import the graphic image
+import { Link } from "react-router-dom";
+import Navbar from "./Navbar"; // Import the Navbar component
+import Footer from "./Footer"; // Import the Footer component
+import { Swiper, SwiperSlide } from "swiper/react"; // Import Swiper components
+import { Autoplay, Pagination, Navigation } from "swiper/modules"; // Import Swiper modules
+import "swiper/css"; // Import Swiper styles
+import "swiper/css/pagination"; // Import Swiper pagination styles
+import "swiper/css/navigation"; // Import Swiper navigation styles
+
+// Import images for the carousel
+import teamImage from "./20944338.jpg"; // Hero image
+import teamImage1 from "./assets/team1.png"; // Replace with your image paths
+import teamImage2 from "./assets/team2.png";
+import teamImage3 from "./assets/team3.png";
+import teamImage4 from "./assets/team4.png";
+import teamImage5 from "./assets/team5.png";
+import teamImage6 from "./assets/team6.png";
+import teamImage7 from "./assets/team7.png";
 
 const LandingPage = () => {
   return (
     <div className="font-sans bg-gray-50 text-gray-900">
       {/* Navbar */}
-      <nav className="bg-white shadow-lg sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex justify-between items-center py-4">
-            <div className="text-2xl font-bold text-blue-900">Math IGCSE</div>
-            <div className="flex space-x-4">
-              <a
-                href="/login"
-                className="bg-blue-900 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300"
-              >
-                Login
-              </a>
-              <a
-                href="/register"
-                className="bg-transparent border border-blue-900 text-blue-900 px-4 py-2 rounded-md hover:bg-blue-900 hover:text-white transition duration-300"
-              >
-                Register
-              </a>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Hero Section */}
       <section className="py-20 bg-white text-gray-900">
@@ -33,24 +30,18 @@ const LandingPage = () => {
           {/* Text Half */}
           <div className="md:w-1/2 text-center md:text-left mb-8 md:mb-0">
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              Master Math IGCSE with Confidence
+              Achieve the Highest Grades in Math
             </h1>
             <p className="text-lg md:text-xl mb-8">
-              Unlock your potential with our comprehensive platform designed to help you ace your Math IGCSE exams.
+              Learn from experienced teachers who specialize in Math IGCSE and have a proven track record of helping students achieve top grades.
             </p>
             <div className="space-x-4">
-              <a
-                href="/register"
+              <Link
+                to="/register"
                 className="bg-blue-900 text-white px-6 py-3 rounded-md font-semibold hover:bg-blue-700 transition duration-300"
               >
-                Get Started
-              </a>
-              <a
-                href="#features"
-                className="bg-transparent border border-blue-900 text-blue-900 px-6 py-3 rounded-md font-semibold hover:bg-blue-900 hover:text-white transition duration-300"
-              >
-                Learn More
-              </a>
+                Register Now
+              </Link>
             </div>
           </div>
 
@@ -59,7 +50,7 @@ const LandingPage = () => {
             <img
               src={teamImage}
               alt="Team Graphic"
-              className="w-full max-w-md"
+              className="w-full max-w-md "
             />
           </div>
         </div>
@@ -68,8 +59,10 @@ const LandingPage = () => {
       {/* Features Section */}
       <section id="features" className="py-20 bg-blue-900">
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12 text-gray-100" >Why Choose Us?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 ">
+          <h2 className="text-3xl font-bold text-center mb-12 text-gray-100">
+            Why Team Abbassi?
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Feature 1 */}
             <div className="text-center bg-gray-50 p-6 rounded-lg shadow-md transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
               <div className="bg-blue-100 text-blue-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -88,9 +81,9 @@ const LandingPage = () => {
                   ></path>
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Comprehensive Materials</h3>
+              <h3 className="text-xl font-semibold mb-2">Extensive Resources</h3>
               <p className="text-gray-600">
-                Access past papers, video tutorials, and interactive problem-solving tools.
+                Access Markschemes, Video lessons, and Pastpapers.
               </p>
             </div>
 
@@ -112,9 +105,11 @@ const LandingPage = () => {
                   ></path>
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Expert Teachers</h3>
+              <h3 className="text-xl font-semibold mb-2">
+                Highly Qualified and Experienced Instructors
+              </h3>
               <p className="text-gray-600">
-                Learn from experienced Math IGCSE teachers with proven track records.
+                Learn from experienced Maths teachers with a track record of excellence.
               </p>
             </div>
 
@@ -136,9 +131,11 @@ const LandingPage = () => {
                   ></path>
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Real-Time Progress Tracking</h3>
+              <h3 className="text-xl font-semibold mb-2">
+                Immediate Student Progress Updates
+              </h3>
               <p className="text-gray-600">
-                Track your progress with homework, exam grades, and announcements.
+                Monitor your progress through homework, exam results, and important announcements.
               </p>
             </div>
           </div>
@@ -148,12 +145,11 @@ const LandingPage = () => {
       {/* Statistics Section */}
       <section id="stats" className="py-20 bg-gray-100">
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Trusted By</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             {/* Stat 1 */}
             <div>
-              <h3 className="text-5xl font-bold text-blue-900">15+</h3>
-              <p className="text-gray-600">Schools trusting us</p>
+              <h3 className="text-5xl font-bold text-blue-900">20+</h3>
+              <p className="text-gray-600">Years of experience</p>
             </div>
             {/* Stat 2 */}
             <div>
@@ -162,80 +158,108 @@ const LandingPage = () => {
             </div>
             {/* Stat 3 */}
             <div>
-              <h3 className="text-5xl font-bold text-blue-900">100+</h3>
-              <p className="text-gray-600">Dedicated assistants</p>
-            </div>
-            {/* Stat 4 */}
-            <div>
-              <h3 className="text-5xl font-bold text-blue-900">80%</h3>
-              <p className="text-gray-600">Scored A or higher</p>
+              <h3 className="text-5xl font-bold text-blue-900">73%</h3>
+              <p className="text-gray-600">Scored A* and A</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Team Section */}
-      <section id="team" className="py-20 bg-white">
+      <section id="team" className="py-20 bg-blue-900">
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Our Team</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Team Member 1 */}
-            <div className="bg-gray-50 p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
-              <div className="w-32 h-32 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <span className="text-blue-900 text-4xl font-bold">J</span>
-              </div>
-              <h3 className="text-xl font-semibold text-center mb-2">John Doe</h3>
-              <p className="text-gray-600 text-center">Math IGCSE Teacher</p>
-              <p className="text-gray-600 text-center mt-4">
-                With over a two decade of experience, he specializes in making complex topics easy to understand.
-              </p>
-            </div>
-            {/* Team Member 2 */}
-            <div className="bg-gray-50 p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
-              <div className="w-32 h-32 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <span className="text-blue-900 text-4xl font-bold">S</span>
-              </div>
-              <h3 className="text-xl font-semibold text-center mb-2">Sarah Smith</h3>
-              <p className="text-gray-600 text-center">Math Co-Teacher</p>
-              <p className="text-gray-600 text-center mt-4">
-                He focuses on breaking down theoretical concepts into digestible lessons.
-              </p>
-            </div>
-            {/* Team Member 3 */}
-            <div className="bg-gray-50 p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
-              <div className="w-32 h-32 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <span className="text-blue-900 text-4xl font-bold">M</span>
-              </div>
-              <h3 className="text-xl font-semibold text-center mb-2">Mike Johnson</h3>
-              <p className="text-gray-600 text-center">MAth Co-Teacher</p>
-              <p className="text-gray-600 text-center mt-4">
-                He is passionate about practical problem-solving and exam preparation.
-              </p>
-            </div>
+          <h2 className="text-3xl font-bold text-center mb-12 text-white">Our Founder</h2>
+          <div className="w-32 h-32 bg-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+            <span className="text-blue-900 text-4xl font-bold">MA</span>
           </div>
+          <h3 className="text-2xl text-white font-semibold text-center mb-2">Mohamed Abbassi</h3>
+          <p className="text-gray-200 text-center">Math IGCSE Teacher</p>
+          <p className="text-gray-200 text-center mt-4">
+            With over two decades of experience, he specializes in making complex topics easy to understand.
+          </p>
+        </div>
+      </section>
+
+      {/* Photo Carousel Section */}
+      <section className="py-20 bg-gray-100">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12">Gallery</h2>
+          <Swiper
+            spaceBetween={30}
+            centeredSlides={true}
+            autoplay={{
+              delay: 3000, // Auto-switch every 3 seconds
+              disableOnInteraction: false,
+            }}
+            pagination={{
+              clickable: true,
+            }}
+            navigation={true}
+            modules={[Autoplay, Pagination, Navigation]}
+            className="w-full"
+          >
+            {/* Slide 1 */}
+            <SwiperSlide>
+              <img
+                src={teamImage1}
+                alt="Team Graphic 1"
+                className="w-full h-full object-cover rounded-lg shadow-lg"
+              />
+            </SwiperSlide>
+            {/* Slide 2 */}
+            <SwiperSlide>
+              <img
+                src={teamImage2}
+                alt="Team Graphic 2"
+                className="w-full h-full object-cover rounded-lg shadow-lg"
+              />
+            </SwiperSlide>
+            {/* Slide 3 */}
+            <SwiperSlide>
+              <img
+                src={teamImage3}
+                alt="Team Graphic 3"
+                className="w-full h-full object-cover rounded-lg shadow-lg"
+              />
+            </SwiperSlide>
+            {/* Slide 4 */}
+            <SwiperSlide>
+              <img
+                src={teamImage4}
+                alt="Team Graphic 4"
+                className="w-full h-full object-cover rounded-lg shadow-lg"
+              />
+            </SwiperSlide>
+            {/* Slide 5 */}
+            <SwiperSlide>
+              <img
+                src={teamImage5}
+                alt="Team Graphic 5"
+                className="w-full h-full object-cover rounded-lg shadow-lg"
+              />
+            </SwiperSlide>
+            {/* Slide 6 */}
+            <SwiperSlide>
+              <img
+                src={teamImage6}
+                alt="Team Graphic 6"
+                className="w-full h-full object-cover rounded-lg shadow-lg"
+              />
+            </SwiperSlide>
+            {/* Slide 7 */}
+            <SwiperSlide>
+              <img
+                src={teamImage7}
+                alt="Team Graphic 7"
+                className="w-full h-full object-cover rounded-lg shadow-lg"
+              />
+            </SwiperSlide>
+          </Swiper>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-800 text-white py-8">
-        <div className="max-w-6xl mx-auto px-4 text-center">
-          <p>&copy; 2023 Math IGCSE Pro. All rights reserved.</p>
-          <div className="mt-4 space-x-4">
-            <button
-              onClick={() => window.open("https://facebook.com", "_blank")}
-              className="hover:text-blue-900"
-            >
-              Facebook
-            </button>
-            <button
-              onClick={() => window.open("https://instagram.com", "_blank")}
-              className="hover:text-blue-900"
-            >
-              Instagram
-            </button>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
