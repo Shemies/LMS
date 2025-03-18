@@ -25,38 +25,34 @@ const Login = () => {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      if (user.emailVerified) {
-        console.log("Login successful");
+      console.log("Login successful");
 
-        const usersRef = ref(db, "users");
-        const snapshot = await get(usersRef);
+      const usersRef = ref(db, "users");
+      const snapshot = await get(usersRef);
 
-        if (snapshot.exists()) {
-          const usersData = snapshot.val();
-          const foundUser = Object.values(usersData).find(
-            (u) => u.email === user.email
-          );
+      if (snapshot.exists()) {
+        const usersData = snapshot.val();
+        const foundUser = Object.values(usersData).find(
+          (u) => u.email === user.email
+        );
 
-          if (foundUser) {
-            setRole(foundUser.role);
-            setEnrolledCourse(foundUser.enrolledCourse);
+        if (foundUser) {
+          setRole(foundUser.role);
+          setEnrolledCourse(foundUser.enrolledCourse);
 
-            console.log("User Role:", foundUser.role);
-            console.log("Enrolled Course:", foundUser.enrolledCourse);
+          console.log("User Role:", foundUser.role);
+          console.log("Enrolled Course:", foundUser.enrolledCourse);
 
-            if (foundUser.role === "admin") {
-              navigate("/admin");
-            } else {
-              navigate("/dashboard");
-            }
+          if (foundUser.role === "admin") {
+            navigate("/admin");
           } else {
-            setError("User data not found. Please contact support.");
+            navigate("/dashboard");
           }
         } else {
-          setError("No users found in the database. Please contact support.");
+          setError("User data not found. Please contact support.");
         }
       } else {
-        setError("Please verify your email before logging in.");
+        setError("No users found in the database. Please contact support.");
       }
     } catch (err) {
       console.error("Firebase Error:", err); // Log the full error object
