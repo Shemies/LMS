@@ -75,7 +75,7 @@ const Layout = ({ children }) => {
           sidebarOpen ? "translate-x-0" : "-translate-x-64"
         } sm:translate-x-0 sm:w-1/4`}
       >
-        <div className="mb-6 flex justify-between items-center">
+        <div className="mb-2 flex justify-between items-center">
           <img src={logo} alt="LMS Logo" className="h-20" href="/" />
           {/* Close Button on Mobile */}
           <button
@@ -109,7 +109,7 @@ const Layout = ({ children }) => {
         </ul>
 
         {/* Logout Button */}
-        <div className="mt-6">
+        <div className="mt-2">
           <button
             onClick={handleLogout}
             className="flex items-center w-full p-3 bg-red-600 rounded-lg hover:bg-red-700 transition duration-200"

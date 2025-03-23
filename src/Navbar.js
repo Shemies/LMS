@@ -10,7 +10,7 @@ const Navbar = () => {
           {/* Logo and Brand Name */}
           <Link to="/" className="flex items-center space-x-2">
             <img src={logo} alt="LMS Logo" className="h-20" /> {/* Logo */}
-            <div className="lg:text-3xl font-bold text-blue-950 md:block lg:block sm:hidden">Team Abbassi</div> {/* Brand Name */}
+            <div className="lg:text-3xl font-bold text-blue-950 md:block lg:block sm:hidden">T</div> {/* Brand Name */}
           </Link>
 
           {/* Login and Register Buttons */}
@@ -27,7 +27,7 @@ const Navbar = () => {
             >
               Register
             </Link>
-          </div>
+          </div>  
         </div>
       </div>
     </nav>

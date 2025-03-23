@@ -240,17 +240,18 @@ const UsersManagement = () => {
 
       {/* Course Tabs */}
       <div className="flex space-x-4 mb-6">
-        <button
-          className={`p-2 ${activeCourse === "AS" ? "bg-blue-600" : "bg-gray-600"} rounded-md`}
-          onClick={() => setActiveCourse("AS")}
-        >
-          AS Course
-        </button>
+        
         <button
           className={`p-2 ${activeCourse === "OL" ? "bg-blue-600" : "bg-gray-600"} rounded-md`}
           onClick={() => setActiveCourse("OL")}
         >
           OL Course
+        </button>
+        <button
+          className={`p-2 ${activeCourse === "AS" ? "bg-blue-600" : "bg-gray-600"} rounded-md`}
+          onClick={() => setActiveCourse("AS")}
+        >
+          AS Course
         </button>
       </div>
 
