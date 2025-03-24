@@ -26,6 +26,9 @@ import AdminDashboard from "./AdminDashboard";
 import LandingPage from "./LandingPage";
 import RegistrationPage from "./Registeration";
 import RegistrationRequests from "./RegistrationRequests";
+import AdminHomeworkTracking from "./AdminHomeworkTracking";
+import StudentHomeworkStatus from "./StudentHomeworkStatus";
+import AdminStudentReport from "./AdminStudentReport";
 
 function App() {
   return (
@@ -49,6 +52,8 @@ function App() {
             <Route path="/homeworks" element={<ProtectedRoute><Homeworks /></ProtectedRoute>} />
             <Route path="/exams" element={<ProtectedRoute><Exams /></ProtectedRoute>} />
             <Route path="/pastpapers" element={<ProtectedRoute><PastPapers /></ProtectedRoute>} />
+            <Route path="/homework_track" element={<ProtectedRoute><StudentHomeworkStatus /></ProtectedRoute>} />
+            
 
             {/* Admin Routes (Restricted) */}
             <Route path="/admin" element={
@@ -66,6 +71,10 @@ function App() {
               <Route path="pastpapers" element={<AdminPastPapers />} />
               <Route path="exams" element={<AdminExamGrades />} />
               <Route path="registration-requests" element={<RegistrationRequests />} />
+              <Route path="hwtracking" element={<AdminHomeworkTracking />} />
+              <Route path="studentreport" element={<AdminStudentReport />} />
+
+              
             </Route>
           </Routes>
         </Router>

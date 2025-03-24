@@ -83,8 +83,8 @@ const Login = () => {
     <div className="font-sans bg-gray-50 text-gray-900 bg-white">
       <Navbar /> {/* Include the Navbar component */}
 
-      <div className="flex items-center justify-center min-h-screen bg-white ">
-      <div className="md:w-1/2 flex justify-center hidden lg:block  ">
+      <div className="flex items-center justify-center  bg-white ">
+      <div className=" flex justify-center hidden lg:block  ">
             <img
               src={teamImage}
               alt="Team Graphic"

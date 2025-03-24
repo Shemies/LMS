@@ -13,8 +13,7 @@ const AdminLayout = () => {
           sidebarOpen ? "translate-x-0" : "-translate-x-64"
         } sm:translate-x-0`}
       >
-        <div className="mb-6 flex justify-between items-center">
-          <h2 className="text-xl font-bold">Admin Panel</h2>
+        <div className=" flex justify-between items-center">
           <button
             className="sm:hidden text-gray-400 hover:text-white"
             onClick={() => setSidebarOpen(false)}
@@ -30,10 +29,13 @@ const AdminLayout = () => {
             { name: "Chapters", path: "/admin/chapters" },
             { name: "Videos", path: "/admin/videos" },
             { name: "Mark Schemes", path: "/admin/markschemes" },
-            { name: "Homeworks", path: "/admin/homeworks" },
+            { name: "Homework", path: "/admin/homeworks" },
             { name: "Exams", path: "/admin/exams" },
             { name: "Past Papers", path: "/admin/pastpapers" },
             { name: "Registeration Requests", path: "/admin/registration-requests" },
+            { name: "Homework Tracking", path: "/admin/hwtracking" },
+            { name: "Student Report", path: "/admin/studentreport" },
+
           ].map((item) => (
             <li key={item.name}>
               <Link
@@ -45,10 +47,7 @@ const AdminLayout = () => {
               </Link>
             </li>
           ))}
-          <li>
-            <Link to="/logout" className="block w-full p-2 bg-red-900 rounded-lg hover:bg-red-600 transition duration-200" onClick={() => setSidebarOpen(false)}>
-            Logout</Link>
-          </li>
+          
         </ul>
       </div>
 
@@ -63,6 +62,10 @@ const AdminLayout = () => {
             <Menu size={24} />
           </button>
           <h2 className="text-lg font-semibold">Admin Panel</h2>
+          
+            <Link to="/logout" className="block w-20 text-center p-2 bg-red-900 rounded-lg hover:bg-red-600 transition duration-200" onClick={() => setSidebarOpen(false)}>
+            Logout</Link>
+          
         </div>
 
         {/* Page Content */}
