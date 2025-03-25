@@ -510,7 +510,7 @@ const UsersManagement = () => {
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-800 text-white">
+            <thead className="bg-gray-300 text-black">
               <tr>
                 <th 
                   className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer"

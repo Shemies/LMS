@@ -78,54 +78,91 @@ const StudentHomeworkStatus = () => {
 
   return (
     <Layout username={username}>
-      <h1 className="text-3xl font-bold mb-6 text-black">Homework Status</h1>
+      <div className="px-4 py-6">
+        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-black">Homework Status</h1>
 
-      {homeworks.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-md text-sm sm:text-base">
-            <thead>
-              <tr className="bg-gray-600 text-white text-xs sm:text-base">
-                <th className="py-2 px-3 sm:py-3 sm:px-6 text-left">Homework</th>
-                <th className="py-2 px-3 sm:py-3 sm:px-6 text-center">Due Date</th>
-                <th className="py-2 px-3 sm:py-3 sm:px-6 text-center">Status</th>
-              </tr>
-            </thead>
-            <tbody>
+        {homeworks.length > 0 ? (
+          <div className="overflow-x-auto">
+            {/* Mobile Cards View */}
+            <div className="sm:hidden space-y-4">
               {homeworks.map((hw) => {
                 const dueDate = new Date(hw.dueDate);
                 const isPastDue = new Date() >= dueDate;
-                
+                const statusText = !isPastDue ? "Not Yet" : 
+                                 hw.status.charAt(0).toUpperCase() + hw.status.slice(1);
+                const statusColor = !isPastDue ? "bg-gray-400" :
+                                  hw.status === "done" ? "bg-green-500" :
+                                  hw.status === "incomplete" ? "bg-yellow-500" : "bg-red-500";
+
                 return (
-                  <tr key={hw.id} className="border-b border-gray-200 hover:bg-gray-100">
-                    <td className="py-2 px-3 sm:py-3 sm:px-6 text-gray-800">{hw.title}</td>
-                    <td className="py-2 px-3 sm:py-3 sm:px-6 text-center text-gray-800">
-                      {dueDate.toLocaleDateString()}
-                    </td>
-                    <td className="py-2 px-3 sm:py-3 sm:px-6 text-center">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs sm:text-sm ${
-                          !isPastDue
-                            ? "bg-gray-400 text-white" // Gray for "not yet"
+                  <div key={hw.id} className="bg-white p-4 rounded-lg shadow">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-medium text-gray-800">{hw.title}</h3>
+                      <span className={`px-2 py-1 rounded-full text-xs ${statusColor} text-white`}>
+                        {statusText}
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      <p>Due: {dueDate.toLocaleDateString()}</p>
+                      {hw.description && (
+                        <p className="mt-2 text-gray-700">{hw.description}</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table View */}
+            <table className="hidden sm:table w-full max-w-4xl mx-auto bg-white rounded-lg shadow-md text-sm md:text-base">
+              <thead>
+                <tr className="bg-gray-600 text-white">
+                  <th className="py-3 px-4 md:px-6 text-left">Homework</th>
+                  <th className="py-3 px-4 md:px-6 text-center">Due Date</th>
+                  <th className="py-3 px-4 md:px-6 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {homeworks.map((hw) => {
+                  const dueDate = new Date(hw.dueDate);
+                  const isPastDue = new Date() >= dueDate;
+                  
+                  return (
+                    <tr key={hw.id} className="border-b border-gray-200 hover:bg-gray-50">
+                      <td className="py-3 px-4 md:px-6 text-gray-800">
+                        <div className="font-medium">{hw.title}</div>
+                        {hw.description && (
+                          <div className="text-xs text-gray-500 mt-1">{hw.description}</div>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 md:px-6 text-center text-gray-800">
+                        {dueDate.toLocaleDateString()}
+                      </td>
+                      <td className="py-3 px-4 md:px-6 text-center">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs sm:text-sm ${!isPastDue
+                            ? "bg-gray-400 text-white"
                             : hw.status === "done"
                             ? "bg-green-500 text-white"
                             : hw.status === "incomplete"
                             ? "bg-yellow-500 text-white"
                             : "bg-red-500 text-white"
-                        }`}
-                      >
-                        {!isPastDue ? "Not Yet" : 
-                         hw.status.charAt(0).toUpperCase() + hw.status.slice(1)}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <p className="text-center text-gray-400">No homework assignments found.</p>
-      )}
+                          }`}
+                        >
+                          {!isPastDue ? "Not Yet" : 
+                           hw.status.charAt(0).toUpperCase() + hw.status.slice(1)}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-center text-gray-400">No homework assignments found.</p>
+        )}
+      </div>
     </Layout>
   );
 };
