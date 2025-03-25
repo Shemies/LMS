@@ -1,6 +1,21 @@
 import React, { useState } from "react";
 import { Link, Outlet } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { 
+  Menu, 
+  X,
+  LayoutDashboard,
+  Users,
+  BookOpen,
+  Video,
+  FileText,
+  ClipboardList,
+  ClipboardCheck,
+  Bookmark,
+  FileArchive,
+  UserPlus,
+  LogOut
+} from "lucide-react";
+
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -24,25 +39,27 @@ const AdminLayout = () => {
 
         <ul className="space-y-3">
           {[
-            { name: "Dashboard", path: "/admin/dashboard" },
-            { name: "Users", path: "/admin/users" },
-            { name: "Chapters", path: "/admin/chapters" },
-            { name: "Videos", path: "/admin/videos" },
-            { name: "Mark Schemes", path: "/admin/markschemes" },
-            { name: "Homework", path: "/admin/homeworks" },
-            { name: "Exams", path: "/admin/exams" },
-            { name: "Past Papers", path: "/admin/pastpapers" },
-            { name: "Registeration Requests", path: "/admin/registration-requests" },
-            { name: "Homework Tracking", path: "/admin/hwtracking" },
-            { name: "Student Report", path: "/admin/studentreport" },
+            { name: "Dashboard", path: "/admin/dashboard", icon: <LayoutDashboard size={18} /> },
+            { name: "Users", path: "/admin/users", icon: <Users size={18} /> },
+            { name: "Chapters", path: "/admin/chapters", icon: <BookOpen size={18} /> },
+            { name: "Videos", path: "/admin/videos", icon: <Video size={18} /> },
+            { name: "Mark Schemes", path: "/admin/markschemes", icon: <FileText size={18} /> },
+            { name: "Homework Announcement", path: "/admin/homeworks", icon: <ClipboardList size={18} /> },
+            { name: "Homework Tracking", path: "/admin/hwtracking", icon: <ClipboardCheck size={18} /> },
+            { name: "Exams", path: "/admin/exams", icon: <Bookmark size={18} /> },
+            { name: "Past Papers", path: "/admin/pastpapers", icon: <FileArchive size={18} /> },
+            { name: "Registration Requests", path: "/admin/registration-requests", icon: <UserPlus size={18} /> },
+            
+            // { name: "Student Report", path: "/admin/studentreport" },
 
           ].map((item) => (
             <li key={item.name}>
               <Link
                 to={item.path}
-                className="block w-full p-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition duration-200"
+                className="flex items-center gap-3 w-full p-2 px-4 bg-gray-700 rounded-lg hover:bg-gray-600 transition duration-200"
                 onClick={() => setSidebarOpen(false)}
               >
+                <span className="text-gray-300">{item.icon}</span>
                 {item.name}
               </Link>
             </li>
