@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Layout from "./Layout";
 import { auth, db, ref, query, orderByChild, equalTo, onValue } from "./firebase";
-import { FiUser, FiMail, FiCreditCard, FiBook, FiEdit } from "react-icons/fi";
+import { FiUser, FiMail, FiCreditCard, FiBook, FiEdit, FiHome } from "react-icons/fi";
 
 const Profile = () => {
   const [user, setUser] = useState({
@@ -9,6 +9,7 @@ const Profile = () => {
     email: "",
     studentId: "",
     level: "",
+    school: "" // Added school field
   });
   const [initials, setInitials] = useState(""); 
   const [loading, setLoading] = useState(true);
@@ -37,6 +38,7 @@ const Profile = () => {
                 email: userData.email || "N/A",
                 studentId: userData.studentId || "N/A",
                 level: userData.enrolledCourse || "N/A",
+                school: userData.school || "N/A" // Set school data
               });
 
               const initials = `${firstName.charAt(0)}${lastName ? lastName.charAt(0) : ""}`;
@@ -96,7 +98,7 @@ const Profile = () => {
               </div>
               <div className="mt-3 sm:mt-0">
                 <h1 className="text-xl sm:text-2xl font-bold break-words">{user.name}</h1>
-                <p className="text-indigo-100 text-sm sm:text-base mt-1">{user.level}</p>
+                <p className="text-indigo-100 text-sm sm:text-base mt-1">{user.level} • {user.school}</p>
               </div>
             </div>
           </div>
@@ -147,6 +149,19 @@ const Profile = () => {
                 <div>
                   <h3 className="text-xs font-medium text-gray-500">Current Level</h3>
                   <p className="text-base font-medium text-gray-900">{user.level}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Added School Information */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="flex items-center">
+                <div className="bg-indigo-100 p-2 rounded-full mr-3">
+                  <FiHome className="text-indigo-600 text-lg" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-medium text-gray-500">School</h3>
+                  <p className="text-base font-medium text-gray-900">{user.school}</p>
                 </div>
               </div>
             </div>
