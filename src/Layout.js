@@ -74,10 +74,10 @@ const Layout = ({ children }) => {
     { name: "Chapters", path: "/chapters", icon: <BookMarked size={20} /> },
     { name: "Videos", path: "/videos", icon: <PlaySquare size={20} /> },
     { name: "Mark Schemes", path: "/markschemes", icon: <FileCheck size={20} /> },
-    { name: "Homeworks Due", path: "/homeworks", icon: <CalendarCheck size={20} /> },
+    { name: "Homework", path: "/homeworks", icon: <CalendarCheck size={20} /> },
     { name: "Exams Grades", path: "/exams", icon: <BookOpenCheck size={20} /> },
     { name: "Past Papers", path: "/pastpapers", icon: <FileSearch size={20} /> },
-    { name: "Homework Status", path: "/homework_track", icon: <ClipboardCheck size={20} /> },
+    // { name: "Homework Status", path: "/homework_track", icon: <ClipboardCheck size={20} /> },
   ];
 
   return (

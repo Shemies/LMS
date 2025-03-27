@@ -1,160 +1,190 @@
-import React, { useEffect, useState } from "react";
-import { db, ref, onValue } from "./firebase";
-import { auth } from "./firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import React, { useState, useEffect } from "react";
 import Layout from "./Layout";
+import { auth, db, ref, onValue, query, orderByChild, equalTo } from "./firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { useAuth } from "./AuthContext";
 
-const Homeworks = () => {
+const HomeworkPage = () => {
   const [homeworks, setHomeworks] = useState([]);
-  const [enrolledCourse, setEnrolledCourse] = useState(null);
+  const [username, setUsername] = useState("Loading...");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [expandedId, setExpandedId] = useState(null);
+  const { enrolledCourse } = useAuth();
 
-  // Get today's date
-  const today = new Date().toISOString().split("T")[0];
+  const toggleDescription = (id) => {
+    setExpandedId(expandedId === id ? null : id);
+  };
 
   useEffect(() => {
-    // Listen for authentication state changes
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
-        console.log("User is authenticated:", user.email); // Debugging
-
-        // Fetch all users to find the one matching the authenticated user
         const usersRef = ref(db, "users");
-        const unsubscribeUsers = onValue(
-          usersRef,
-          (snapshot) => {
-            if (snapshot.exists()) {
-              const usersData = snapshot.val();
+        const userQuery = query(usersRef, orderByChild("email"), equalTo(user.email));
 
-              // Find the user with the matching email (or other unique identifier)
-              const authenticatedUser = Object.values(usersData).find(
-                (u) => u.email === user.email
-              );
+        const unsubscribeUser = onValue(userQuery, (snapshot) => {
+          if (snapshot.exists()) {
+            const userData = Object.values(snapshot.val())[0];
+            setUsername(userData.name);
 
-              if (authenticatedUser) {
-                console.log("Authenticated user data:", authenticatedUser); // Debugging
-                if (authenticatedUser.enrolledCourse) {
-                  setEnrolledCourse(authenticatedUser.enrolledCourse); // Set enrolled course
-                } else {
-                  setError("No enrolled course found. Please enroll in a course.");
-                }
-              } else {
-                setError("User data not found. Please complete your profile.");
-              }
-            } else {
-              setError("No users found in the database.");
+            if (!userData.enrolledCourse) {
+              setError("No enrolled course found. Please enroll in a course.");
+              setLoading(false);
+              return;
             }
-            setLoading(false);
-          },
-          (error) => {
-            console.error("Error fetching users:", error);
-            setError("Failed to fetch user data. Please try again later.");
+
+            const homeworksRef = ref(db, `courses/${userData.enrolledCourse}/homeworks`);
+            onValue(homeworksRef, (homeworkSnapshot) => {
+              if (homeworkSnapshot.exists()) {
+                const currentDate = new Date();
+                let allHomeworks = Object.entries(homeworkSnapshot.val()).map(
+                  ([id, hw]) => {
+                    const dueDate = new Date(hw.dueDate);
+                    const isDue = currentDate >= dueDate;
+                    const userStatus = userData.homeworkStatus?.[id];
+                    
+                    return {
+                      id,
+                      ...hw,
+                      status: !isDue ? "not due yet" : 
+                             userStatus === "done" ? "done" :
+                             userStatus === "incomplete" ? "incomplete" : "missing",
+                      dueDateObj: dueDate
+                    };
+                  }
+                );
+
+                allHomeworks.sort((a, b) => b.dueDateObj - a.dueDateObj);
+                setHomeworks(allHomeworks);
+              } else {
+                setHomeworks([]);
+                setError("No homeworks found for the enrolled course.");
+              }
+              setLoading(false);
+            }, (error) => {
+              console.error("Error fetching homeworks:", error);
+              setError("Failed to fetch homeworks. Please try again later.");
+              setLoading(false);
+            });
+          } else {
+            setUsername("Unknown User");
+            setHomeworks([]);
+            setError("User data not found. Please complete your profile.");
             setLoading(false);
           }
-        );
+        });
 
-        return () => unsubscribeUsers(); // Cleanup users listener
+        return () => unsubscribeUser();
       } else {
+        setUsername("Not Logged In");
+        setHomeworks([]);
         setError("User not authenticated. Please log in.");
         setLoading(false);
       }
     });
 
-    return () => unsubscribeAuth(); // Cleanup auth listener
+    return () => unsubscribeAuth();
   }, []);
 
-  useEffect(() => {
-    if (!enrolledCourse) return; // Exit if no enrolled course
-
-    // Fetch homeworks for the enrolled course
-    const homeworksRef = ref(db, `courses/${enrolledCourse}/homeworks`);
-    const unsubscribeHomeworks = onValue(
-      homeworksRef,
-      (snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          const formattedHomeworks = Object.entries(data).map(([id, hw]) => ({
-            id,
-            ...hw,
-          }));
-
-          // Debugging: Log unsorted homeworks
-          console.log("Unsorted homeworks:", formattedHomeworks);
-
-          // Sort homeworks by due date (oldest last)
-          const sortedHomeworks = formattedHomeworks.sort((a, b) => {
-            const dateA = new Date(a.dueDate);
-            const dateB = new Date(b.dueDate);
-            return dateB - dateA; // Sort in ascending order (oldest first)
-          });
-
-          // Debugging: Log sorted homeworks
-          console.log("Sorted homeworks:", sortedHomeworks);
-
-          setHomeworks(sortedHomeworks);
-        } else {
-          setHomeworks([]);
-          setError("No homeworks found for the enrolled course.");
-        }
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Error fetching homeworks:", error);
-        setError("Failed to fetch homeworks. Please try again later.");
-        setLoading(false);
-      }
-    );
-
-    return () => unsubscribeHomeworks(); // Cleanup homeworks listener
-  }, [enrolledCourse]); // Re-fetch when enrolledCourse changes
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "done": return "bg-green-500";
+      case "incomplete": return "bg-yellow-500";
+      case "missing": return "bg-red-500";
+      case "not due yet": return "bg-gray-400";
+      default: return "bg-gray-400";
+    }
+  };
 
   if (loading) {
     return (
-      <Layout>
+      <Layout username={username}>
         <div className="flex items-center justify-center min-h-screen">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
         </div>
       </Layout>
-    ); // Show loading spinner
+    );
   }
 
   if (error) {
     return (
-      <Layout>
+      <Layout username={username}>
         <div className="flex items-center justify-center min-h-screen">
           <p className="text-red-600 text-center">{error}</p>
         </div>
       </Layout>
-    ); // Show error message
+    );
   }
 
   return (
-    <Layout>
-      <h1 className="text-3xl font-bold mb-6 text-black">Homeworks</h1>
+    <Layout username={username}>
+      <div className="px-4 py-6">
+        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-black">Homework</h1>
+        
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-md text-sm md:text-base">
+            <thead>
+              <tr className="bg-gray-600 text-white">
+                <th className="py-3 px-4 md:px-6 text-left">Assignment</th>
+                <th className="py-3 px-4 md:px-6 text-left">Description</th>
+                <th className="py-3 px-4 md:px-6 text-center">Due Date</th>
+                <th className="py-3 px-4 md:px-6 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {homeworks.map((hw) => (
+                <tr key={hw.id} className="border-b border-gray-200 hover:bg-gray-50">
+                  <td className="py-3 px-4 md:px-6 font-medium text-gray-800">{hw.title}</td>
+                  <td className="py-3 px-4 md:px-6 text-gray-700">{hw.description}</td>
+                  <td className="py-3 px-4 md:px-6 text-center text-gray-800">
+                    {hw.dueDateObj.toLocaleDateString()}
+                  </td>
+                  <td className="py-3 px-4 md:px-6 text-center">
+                    <span className={`px-3 py-1 rounded-full text-xs sm:text-sm text-white ${getStatusColor(hw.status)}`}>
+                      {hw.status.charAt(0).toUpperCase() + hw.status.slice(1)}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-      <div className="space-y-4">
-        {homeworks.length > 0 ? (
-          homeworks.map((hw) => (
-            <div
-              key={hw.id}
-              className={`p-5 rounded-lg border ${
-                hw.dueDate < today ? "bg-red-900 text-white" : "bg-gray-400 text-black"
-              }`}
-            >
-              <h2 className="text-xl font-semibold">{hw.title}</h2>
-              <p className="text-white">{hw.description}</p>
-              <p className="mt-2 font-medium">
-                Due Date: <span className="text-yellow-400">{hw.dueDate}</span>
-              </p>
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-3">
+          {homeworks.map((hw) => (
+            <div key={hw.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div 
+                className="p-4 flex justify-between items-center cursor-pointer"
+                onClick={() => toggleDescription(hw.id)}
+              >
+                <div>
+                  <h3 className="font-medium text-gray-800">{hw.title}</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Due: {hw.dueDateObj.toLocaleDateString()}
+                  </p>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-xs text-white ${getStatusColor(hw.status)}`}>
+                  {hw.status.charAt(0).toUpperCase() + hw.status.slice(1)}
+                </span>
+              </div>
+              
+              {expandedId === hw.id && (
+                <div className="px-4 pb-4 pt-2 border-t border-gray-100">
+                  <p className="text-gray-700">{hw.description}</p>
+                </div>
+              )}
             </div>
-          ))
-        ) : (
-          <p className="text-gray-500">No homeworks available.</p>
+          ))}
+        </div>
+
+        {homeworks.length === 0 && (
+          <p className="text-center text-gray-400 py-8">No homework assignments found.</p>
         )}
       </div>
     </Layout>
   );
 };
 
-export default Homeworks;
+export default HomeworkPage;

@@ -4,20 +4,39 @@ import { Link } from "react-router-dom";
 import Layout from "./Layout";
 import { useProgress } from "./progressContext";
 import { db, ref, onValue } from "./firebase";
-import { useAuth } from "./AuthContext"; // Import useAuth
+import { useAuth } from "./AuthContext";
+import { FaWhatsapp, FaPhone } from "react-icons/fa";
+
+// Date formatting helper
+const formatDate = (date, options = {}) => {
+  if (!date) return '';
+  const defaultOptions = { 
+    month: 'short', 
+    day: 'numeric',
+    year: 'numeric'
+  };
+  const dateObj = new Date(date);
+  if (isNaN(dateObj.getTime())) return '';
+  return dateObj.toLocaleDateString('en-US', {...defaultOptions, ...options});
+};
 
 const Dashboard = () => {
   const [username, setUsername] = useState("Loading...");
   const { progress, setProgress } = useProgress();
-  const { enrolledCourse } = useAuth(); // Use enrolledCourse from context
+  const { enrolledCourse } = useAuth();
 
   // State for dynamic data
-  const [assignments, setAssignments] = useState([]);
-  const [latestVideo, setLatestVideo] = useState(null); // State for latest video
+  const [upcomingAssignments, setUpcomingAssignments] = useState([]);
   const [latestChapterDone, setLatestChapterDone] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const contactNumber = "+201004672283"; // WhatsApp contact number
 
   useEffect(() => {
-    if (!enrolledCourse) return; // Exit if no enrolled course
+    if (!enrolledCourse) return;
+
+    setLoading(true);
+    const today = new Date();
 
     // Fetch chapters progress from Firebase
     const chaptersRef = ref(db, `courses/${enrolledCourse}/chapters`);
@@ -29,11 +48,16 @@ const Dashboard = () => {
         const calculatedProgress = Math.round((completedChapters / totalChapters) * 100);
         setProgress(calculatedProgress);
 
-        // Find the latest completed chapter
-        const latestChapter = Object.values(chaptersData)
+        // Find the latest completed chapter by completion date
+        const completedChaptersList = Object.values(chaptersData)
           .filter((ch) => ch.done)
-          .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))[0];
-        setLatestChapterDone(latestChapter);
+          .map(ch => ({
+            ...ch,
+            completedAt: ch.completedAt ? new Date(ch.completedAt) : new Date(0)
+          }))
+          .sort((a, b) => b.completedAt - a.completedAt);
+
+        setLatestChapterDone(completedChaptersList[0] || null);
       }
     });
 
@@ -41,125 +65,220 @@ const Dashboard = () => {
     const assignmentsRef = ref(db, `courses/${enrolledCourse}/homeworks`);
     const unsubscribeAssignments = onValue(assignmentsRef, (snapshot) => {
       if (snapshot.exists()) {
-        const assignmentsData = Object.values(snapshot.val());
-        setAssignments(assignmentsData);
+        const assignmentsData = Object.entries(snapshot.val()).map(([id, hw]) => ({
+          id,
+          ...hw,
+          dueDateObj: new Date(hw.dueDate)
+        }));
+
+        // Filter upcoming assignments (due date in future)
+        const upcoming = assignmentsData
+          .filter(assignment => assignment.dueDateObj > today)
+          .sort((a, b) => a.dueDateObj - b.dueDateObj) // Sort by due date (closest first)
+          .slice(0, 3); // Show only 3 upcoming assignments
+
+        setUpcomingAssignments(upcoming);
       }
     });
 
-    // Fetch latest video from Firebase
-    const videosRef = ref(db, `courses/${enrolledCourse}/videos`);
-    const unsubscribeVideos = onValue(videosRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const videosData = snapshot.val();
-        const latestVideo = Object.values(videosData).sort((a, b) => new Date(b.date) - new Date(a.date))[0]; // Sort by date if available
-        setLatestVideo(latestVideo);
-      }
-    });
-
+    setLoading(false);
     return () => {
       unsubscribeChapters();
       unsubscribeAssignments();
-      unsubscribeVideos();
     };
   }, [enrolledCourse, setProgress]);
 
-  const safeProgress = progress || 0;
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+        </div>
+      </Layout>
+    );
+  }
 
-  const data = [
+  // Define chart data and colors
+  const safeProgress = progress || 0;
+  const progressData = [
     { name: "Completed", value: safeProgress },
     { name: "Remaining", value: 100 - safeProgress },
   ];
-  const COLORS = ["#3B82F6", "#E5E7EB"];
-
-  // Responsive Pie Chart size
-  const [chartSize, setChartSize] = useState(220);
-  useEffect(() => {
-    const handleResize = () => setChartSize(window.innerWidth < 640 ? 150 : 220);
-    window.addEventListener("resize", handleResize);
-    handleResize();
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  const COLORS = ["#4F46E5", "#E5E7EB"];
 
   return (
     <Layout>
-      <h1 className="text-3xl font-bold text-black mb-6">Dashboard</h1>
+      <div className="px-4 py-6">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 md:mb-8">Dashboard</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Syllabus Completion */}
-        <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 transition-transform duration-300 hover:scale-105 hover:shadow-2xl flex flex-col items-center min-w-0 h-full">
-          <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Syllabus Completion</h3>
-          <div className="w-full flex justify-center max-w-[300px]">
-            <ResponsiveContainer width="100%" height={chartSize}>
-              <PieChart>
-                <Pie
-                  data={data}
-                  cx="50%"
-                  cy="50%"
-                  startAngle={90}
-                  endAngle={-270}
-                  innerRadius="60%"
-                  outerRadius="90%"
-                  dataKey="value"
-                >
-                  {data.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          {/* Progress Card */}
+          <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200">
+            <div className="flex items-center justify-between mb-3 md:mb-4">
+              <h3 className="text-base md:text-lg font-semibold text-gray-900">Course Progress</h3>
+              <span className="text-xs md:text-sm font-medium px-2 md:px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full">
+                {safeProgress}%
+              </span>
+            </div>
+            <div className="h-40 md:h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={progressData}
+                    cx="50%"
+                    cy="50%"
+                    startAngle={90}
+                    endAngle={-270}
+                    innerRadius="70%"
+                    outerRadius="90%"
+                    dataKey="value"
+                  >
+                    {progressData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index]} stroke="none" />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value) => [`${value}%`, value === safeProgress ? 'Completed' : 'Remaining']}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="mt-2 text-center">
+              <Link 
+                to="/chapters" 
+                className="text-indigo-600 hover:text-indigo-800 text-xs md:text-sm font-medium hover:underline"
+              >
+                View all chapters
+              </Link>
+            </div>
           </div>
-          <p className="text-center text-lg font-bold mt-3 text-black">{safeProgress}% Completed</p>
-        </div>
 
-        {/* Due Assignments */}
-        <Link to="/homeworks" className="block">
-          <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 transition-transform duration-300 hover:scale-105 hover:shadow-2xl h-full">
-            <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Due Assignments</h3>
-            <ul className="space-y-2">
-              {assignments.length > 0 ? (
-                assignments.map((assignment, index) => (
-                  <li key={index} className="p-3 bg-gray-100 rounded-lg">
-                    <span className="font-semibold text-[#1E293B]">{assignment.title}</span> - <span className="text-gray-600">{assignment.dueDate}</span>
-                  </li>
+          {/* Upcoming Assignments */}
+          <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200">
+            <div className="flex items-center justify-between mb-3 md:mb-4">
+              <h3 className="text-base md:text-lg font-semibold text-gray-900">Upcoming Assignments</h3>
+              <span className="text-xs font-medium px-2 py-1 bg-amber-100 text-amber-800 rounded-full">
+                {upcomingAssignments.length} upcoming
+              </span>
+            </div>
+            <div className="space-y-2 md:space-y-3">
+              {upcomingAssignments.length > 0 ? (
+                upcomingAssignments.map((assignment) => (
+                  <Link 
+                    key={assignment.id} 
+                    to="/homeworks"
+                    className="block p-2 md:p-3 bg-gray-50 rounded-md md:rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-gray-900 text-sm md:text-base truncate">
+                        {assignment.title}
+                      </span>
+                      <span className="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded-full whitespace-nowrap">
+                        Due {formatDate(assignment.dueDateObj, {year: undefined})}
+                      </span>
+                    </div>
+                    <p className="text-xs md:text-sm text-gray-500 mt-1 truncate">
+                      {assignment.description}
+                    </p>
+                  </Link>
                 ))
               ) : (
-                <p className="text-gray-500">No assignments due.</p>
+                <div className="p-3 md:p-4 text-center">
+                  <p className="text-gray-500 text-sm md:text-base">No upcoming assignments</p>
+                  <Link 
+                    to="/homeworks" 
+                    className="text-indigo-600 hover:text-indigo-800 text-xs md:text-sm font-medium hover:underline mt-1 md:mt-2 inline-block"
+                  >
+                    View all assignments
+                  </Link>
+                </div>
               )}
-            </ul>
+            </div>
           </div>
-        </Link>
 
-        {/* Latest Video */}
-        <Link to="/videos" className="block">
-          <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 transition-transform duration-300 hover:scale-105 hover:shadow-2xl h-full">
-            <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Latest Video</h3>
-            {latestVideo ? (
-              <div className="p-3 bg-gray-100 rounded-lg">
-                <span className="font-semibold text-[#1E293B]">{latestVideo.title}</span> -{" "}
-                <a href={latestVideo.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                  Watch Video
-                </a>
-              </div>
-            ) : (
-              <p className="text-gray-500">No videos available.</p>
-            )}
-          </div>
-        </Link>
-
-        {/* Latest Chapter Done */}
-        <Link to="/chapters" className="block">
-          <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 transition-transform duration-300 hover:scale-105 hover:shadow-2xl h-full">
-            <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Latest Chapter Done</h3>
+          {/* Latest Chapter Done */}
+          <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200">
+            <div className="flex items-center justify-between mb-3 md:mb-4">
+              <h3 className="text-base md:text-lg font-semibold text-gray-900">Last Completed</h3>
+              <span className="text-xs font-medium px-2 py-1 bg-purple-100 text-purple-800 rounded-full">
+                Recent
+              </span>
+            </div>
             {latestChapterDone ? (
-              <div className="p-3 bg-gray-100 rounded-lg">
-                <span className="font-semibold text-[#1E293B]">{latestChapterDone.name}</span>
+              <div className="space-y-3 md:space-y-4">
+                <div className="p-3 md:p-4 bg-purple-50 rounded-md md:rounded-lg">
+                  <h4 className="font-bold text-purple-900 text-sm md:text-base">
+                    {latestChapterDone.name}
+                  </h4>
+                  <p className="text-xs md:text-sm text-purple-700 mt-1">
+                    Completed on {formatDate(latestChapterDone.completedAt)}
+                  </p>
+                </div>
+                <Link 
+                  to="/chapters" 
+                  className="text-indigo-600 hover:text-indigo-800 text-xs md:text-sm font-medium hover:underline inline-block"
+                >
+                  Continue learning
+                </Link>
               </div>
             ) : (
-              <p className="text-gray-500">No chapters completed yet.</p>
+              <div className="p-3 md:p-4 text-center">
+                <p className="text-gray-500 text-sm md:text-base">No chapters completed yet</p>
+                <Link 
+                  to="/chapters" 
+                  className="text-indigo-600 hover:text-indigo-800 text-xs md:text-sm font-medium hover:underline mt-1 md:mt-2 inline-block"
+                >
+                  Start learning
+                </Link>
+              </div>
             )}
           </div>
-        </Link>
+
+          {/* Contact Support Team */}
+          <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200">
+            <div className="flex items-center justify-between mb-3 md:mb-4">
+              <h3 className="text-base md:text-lg font-semibold text-gray-900">Contact Support Team</h3>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded-full">
+                  Online
+                </span>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg">
+                <FaWhatsapp className="text-green-500 text-4xl mb-3" />
+                <p className="text-sm md:text-base text-gray-700 text-center mb-4">
+                  Need help? Chat with our team on WhatsApp
+                </p>
+                <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-3 w-full justify-center">
+                  <a
+                    href={`https://wa.me/${contactNumber.replace(/[^0-9]/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md flex items-center justify-center"
+                  >
+                    <FaWhatsapp className="mr-2" />
+                    WhatsApp Chat
+                  </a>
+                  <a
+                    href={`tel:${contactNumber}`}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center justify-center"
+                  >
+                    <FaPhone className="mr-2" />
+                    Call Us
+                  </a>
+                </div>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-gray-500">
+                  Available 24/7
+                </p>
+              </div>
+            </div>
+          </div>
+
+          
+        </div>
       </div>
     </Layout>
   );

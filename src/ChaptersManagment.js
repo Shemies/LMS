@@ -7,6 +7,9 @@ const AdminChapters = () => {
   const [courses, setCourses] = useState([]);
   const [activeCourse, setActiveCourse] = useState("AS"); // Default active course
   const [newChapterName, setNewChapterName] = useState("");
+  const [editingChapter, setEditingChapter] = useState(null);
+  const [editChapterName, setEditChapterName] = useState("");
+  const [completionDate, setCompletionDate] = useState("");
 
   // Fetch courses from Firebase
   useEffect(() => {
@@ -30,6 +33,7 @@ const AdminChapters = () => {
         const chaptersArray = Object.keys(data).map((key) => ({
           id: key,
           ...data[key],
+          completedAt: data[key].completedAt || null
         }));
         setChapters(chaptersArray);
       } else {
@@ -40,13 +44,18 @@ const AdminChapters = () => {
     return () => unsubscribeChapters();
   }, [activeCourse]);
 
-  // Toggle completion status
+  // Toggle completion status with date
   const handleCheckboxChange = async (id, done) => {
+    const updates = {
+      done: !done,
+      completedAt: !done ? new Date().toISOString() : null
+    };
+
     try {
-      await update(ref(db, `courses/${activeCourse}/chapters/${id}`), { done: !done });
+      await update(ref(db, `courses/${activeCourse}/chapters/${id}`), updates);
       setChapters((prevChapters) =>
         prevChapters.map((chapter) =>
-          chapter.id === id ? { ...chapter, done: !done } : chapter
+          chapter.id === id ? { ...chapter, ...updates } : chapter
         )
       );
     } catch (error) {
@@ -61,7 +70,11 @@ const AdminChapters = () => {
     try {
       const chaptersRef = ref(db, `courses/${activeCourse}/chapters`);
       const newChapterRef = push(chaptersRef);
-      await update(newChapterRef, { name: newChapterName, done: false });
+      await update(newChapterRef, { 
+        name: newChapterName, 
+        done: false,
+        completedAt: null
+      });
 
       setNewChapterName("");
     } catch (error) {
@@ -77,6 +90,44 @@ const AdminChapters = () => {
     } catch (error) {
       console.error("Error deleting chapter:", error);
     }
+  };
+
+  // Start editing a chapter
+  const startEditing = (chapter) => {
+    setEditingChapter(chapter.id);
+    setEditChapterName(chapter.name);
+    setCompletionDate(chapter.completedAt ? chapter.completedAt.split('T')[0] : "");
+  };
+
+  // Save edited chapter
+  const saveEdit = async () => {
+    if (!editChapterName.trim()) return;
+
+    const updates = {
+      name: editChapterName,
+      completedAt: completionDate ? new Date(completionDate).toISOString() : null
+    };
+
+    try {
+      await update(ref(db, `courses/${activeCourse}/chapters/${editingChapter}`), updates);
+      setChapters((prevChapters) =>
+        prevChapters.map((chapter) =>
+          chapter.id === editingChapter ? { ...chapter, ...updates } : chapter
+        )
+      );
+      setEditingChapter(null);
+      setEditChapterName("");
+      setCompletionDate("");
+    } catch (error) {
+      console.error("Error updating chapter:", error);
+    }
+  };
+
+  // Cancel editing
+  const cancelEdit = () => {
+    setEditingChapter(null);
+    setEditChapterName("");
+    setCompletionDate("");
   };
 
   return (
@@ -119,13 +170,25 @@ const AdminChapters = () => {
           <tr className="bg-gray-200">
             <th className="border px-4 py-2">Chapter Name</th>
             <th className="border px-4 py-2">Completed</th>
+            <th className="border px-4 py-2">Completion Date</th>
             <th className="border px-4 py-2">Actions</th>
           </tr>
         </thead>
         <tbody>
           {chapters.map((chapter) => (
             <tr key={chapter.id} className="text-center">
-              <td className="border px-4 py-2">{chapter.name}</td>
+              <td className="border px-4 py-2">
+                {editingChapter === chapter.id ? (
+                  <input
+                    type="text"
+                    value={editChapterName}
+                    onChange={(e) => setEditChapterName(e.target.value)}
+                    className="border px-2 py-1 rounded w-full"
+                  />
+                ) : (
+                  chapter.name
+                )}
+              </td>
               <td className="border px-4 py-2">
                 <input
                   type="checkbox"
@@ -135,12 +198,49 @@ const AdminChapters = () => {
                 />
               </td>
               <td className="border px-4 py-2">
-                <button
-                  onClick={() => handleDeleteChapter(chapter.id)}
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                >
-                  Delete
-                </button>
+                {editingChapter === chapter.id ? (
+                  <input
+                    type="date"
+                    value={completionDate}
+                    onChange={(e) => setCompletionDate(e.target.value)}
+                    className="border px-2 py-1 rounded"
+                  />
+                ) : (
+                  chapter.completedAt ? new Date(chapter.completedAt).toLocaleDateString() : "-"
+                )}
+              </td>
+              <td className="border px-4 py-2 space-x-2">
+                {editingChapter === chapter.id ? (
+                  <>
+                    <button
+                      onClick={saveEdit}
+                      className="bg-green-500 text-white px-3 py-1 rounded"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      className="bg-gray-500 text-white px-3 py-1 rounded"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => startEditing(chapter)}
+                      className="bg-blue-500 text-white px-3 py-1 rounded"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteChapter(chapter.id)}
+                      className="bg-red-500 text-white px-3 py-1 rounded"
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
               </td>
             </tr>
           ))}
