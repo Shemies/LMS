@@ -7,10 +7,10 @@ const Navbar = () => {
     <nav className="bg-white shadow-lg sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex justify-between items-center py-4">
-          
+          {/* Logo and Brand Name */}
           <Link to="/" className="flex items-center space-x-2">
-            <img src={logo} alt="LMS Logo" className="h-20" /> {/* Logo */}
-            <div className="lg:text-3xl font-bold text-blue-950 md:block lg:block sm:hidden">Team Abbassi</div> {/* Brand Name */}
+            <img src={logo} alt="LMS Logo" className="h-20" />
+            <div className="text-3xl font-bold text-blue-950 hidden sm:block">Team Abbassi</div>
           </Link>
 
           {/* Login and Register Buttons */}

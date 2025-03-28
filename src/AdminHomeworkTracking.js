@@ -189,7 +189,7 @@ const AdminHomeworkTracking = () => {
   };
 
   return (
-    <div className="p-4 bg-gray-700 text-white min-h-screen">
+    <div className="p-4 text-white min-h-screen">
       <h1 className="text-2xl md:text-3xl font-bold mb-6">Homework Tracking</h1>
 
       {/* Course Selection */}

@@ -29,6 +29,8 @@ import RegistrationRequests from "./RegistrationRequests";
 import AdminHomeworkTracking from "./AdminHomeworkTracking";
 import StudentHomeworkStatus from "./StudentHomeworkStatus";
 import AdminStudentReport from "./AdminStudentReport";
+import AssistantLayout from "./AssistantLayout";
+import AssistantDashboard from "./AssistantDashboard";
 
 function App() {
   return (
@@ -75,6 +77,19 @@ function App() {
               <Route path="studentreport" element={<AdminStudentReport />} />
 
               
+            </Route>
+
+            {/* Assistant Routes */}
+            <Route path="/assistant" element={
+              <ProtectedRoute requireAssistant={true}>
+                <AssistantLayout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<AssistantDashboard />} />
+              <Route path="dashboard" element={<AssistantDashboard />} />
+              <Route path="homeworks" element={<AdminHomeworks />} />
+              <Route path="exams" element={<AdminExamGrades />} />
+              <Route path="hwtracking" element={<AdminHomeworkTracking />} />
             </Route>
           </Routes>
         </Router>

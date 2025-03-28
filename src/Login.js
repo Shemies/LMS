@@ -5,9 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { ref, get } from "firebase/database";
 import { useAuth } from "./AuthContext";
-import Navbar from "./Navbar"; // Import the Navbar component
-import Footer from "./Footer"; // Import the Footer component
-import teamImage from "./20944201.jpg"; // Import the image
+import Navbar from "./Navbar";
+import Footer from "./Footer";
+import teamImage from "./20944201.jpg";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -26,8 +26,6 @@ const Login = () => {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      console.log("Login successful");
-
       const usersRef = ref(db, "users");
       const snapshot = await get(usersRef);
 
@@ -41,13 +39,16 @@ const Login = () => {
           setRole(foundUser.role);
           setEnrolledCourse(foundUser.enrolledCourse);
 
-          console.log("User Role:", foundUser.role);
-          console.log("Enrolled Course:", foundUser.enrolledCourse);
-
-          if (foundUser.role === "admin") {
-            navigate("/admin");
-          } else {
-            navigate("/dashboard");
+          // Redirect based on role
+          switch(foundUser.role) {
+            case "admin":
+              navigate("/admin");
+              break;
+            case "assistant":
+              navigate("/assistant");
+              break;
+            default:
+              navigate("/dashboard");
           }
         } else {
           setError("User data not found. Please contact support.");
@@ -56,7 +57,7 @@ const Login = () => {
         setError("No users found in the database. Please contact support.");
       }
     } catch (err) {
-      console.error("Firebase Error:", err); // Log the full error object
+      console.error("Login error:", err);
       switch (err.code) {
         case "auth/invalid-email":
           setError("Invalid email address.");
@@ -81,18 +82,17 @@ const Login = () => {
 
   return (
     <div className="font-sans bg-gray-50 text-gray-900 bg-white">
-      <Navbar /> {/* Include the Navbar component */}
+      <Navbar />
+      
+      <div className="flex items-center justify-center bg-white min-h-screen">
+        <div className="hidden lg:block">
+          <img
+            src={teamImage}
+            alt="Team Graphic"
+            className="w-full max-w-md ml-9"
+          />
+        </div>
 
-      <div className="flex items-center justify-center  bg-white ">
-      <div className=" flex justify-center hidden lg:block  ">
-            <img
-              src={teamImage}
-              alt="Team Graphic"
-              className="w-full max-w-md ml-9 "
-            />
-          </div>
-
-        {/* Login Form Section */}
         <div className="w-full md:w-1/2 flex items-center justify-center p-6">
           <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6">
             <h2 className="text-2xl font-semibold text-center text-gray-800">Login</h2>
@@ -133,16 +133,16 @@ const Login = () => {
               </button>
             </form>
             <p className="mt-4 text-center">
-              Not a Student?{" "}
+              Not registered?{" "}
               <Link to="/register" className="text-blue-500 hover:underline">
-                Register Now
+                Create an account
               </Link>
             </p>
           </div>
         </div>
       </div>
 
-      <Footer /> {/* Include the Footer component */}
+      <Footer />
     </div>
   );
 };
