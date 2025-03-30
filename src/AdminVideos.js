@@ -1,156 +1,304 @@
 import React, { useState, useEffect } from "react";
-import { db, ref, onValue, set, remove, push } from "./firebase";
+import { ref, onValue, set, remove, push } from "firebase/database";
+import { db } from "./firebase";
 
 const AdminVideos = () => {
   const [videos, setVideos] = useState([]);
   const [courses, setCourses] = useState([]);
-  const [activeCourse, setActiveCourse] = useState("AS"); // Default active course
-  const [title, setTitle] = useState("");
-  const [url, setUrl] = useState("");
+  const [activeCourse, setActiveCourse] = useState("OL");
   const [editingId, setEditingId] = useState(null);
+  const [editData, setEditData] = useState({ title: "", url: "" });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isAddVideoExpanded, setIsAddVideoExpanded] = useState(false);
+  const [expandedVideoId, setExpandedVideoId] = useState(null);
 
-  // Fetch courses from Firebase
+  // Fetch courses and videos
   useEffect(() => {
     const coursesRef = ref(db, "courses");
     const unsubscribeCourses = onValue(coursesRef, (snapshot) => {
       if (snapshot.exists()) {
         const coursesData = Object.keys(snapshot.val());
         setCourses(coursesData);
+        if (!activeCourse && coursesData.length > 0) {
+          setActiveCourse(coursesData[0]);
+        }
       }
     });
 
     return () => unsubscribeCourses();
   }, []);
 
-  // Fetch videos for the active course from Firebase
   useEffect(() => {
+    if (!activeCourse) return;
+    
     const videosRef = ref(db, `courses/${activeCourse}/videos`);
     const unsubscribeVideos = onValue(videosRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const videoData = snapshot.val();
-        const videoList = Object.keys(videoData).map((key) => ({
-          id: key,
-          ...videoData[key],
-        }));
-        setVideos(videoList);
-      } else {
-        setVideos([]); // Reset videos if no data exists
-      }
+      setVideos(snapshot.exists() 
+        ? Object.entries(snapshot.val()).map(([id, data]) => ({ id, ...data })) 
+        : []);
     });
 
     return () => unsubscribeVideos();
   }, [activeCourse]);
 
-  // Add or Update Video
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!title || !url) return alert("Please enter a title and URL!");
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditData(prev => ({ ...prev, [name]: value }));
+  };
 
-    if (editingId) {
-      // Update existing video
-      set(ref(db, `courses/${activeCourse}/videos/${editingId}`), { title, url });
-      setEditingId(null);
-    } else {
-      // Add new video
-      const newVideoRef = push(ref(db, `courses/${activeCourse}/videos`));
-      set(newVideoRef, { title, url });
+  const startEditing = (video) => {
+    setEditingId(video.id);
+    setEditData({ title: video.title, url: video.url });
+    setExpandedVideoId(null); // Collapse preview when editing
+  };
+
+  const saveEdit = () => {
+    if (!editingId || !editData.title || !editData.url) {
+      alert("Title and URL are required");
+      return;
     }
 
-    // Reset form
-    setTitle("");
-    setUrl("");
+    set(ref(db, `courses/${activeCourse}/videos/${editingId}`), editData)
+      .then(() => {
+        alert("Video updated successfully");
+        setEditingId(null);
+      })
+      .catch(error => alert("Error updating video: " + error.message));
   };
 
-  // Edit Video
-  const handleEdit = (video) => {
-    setTitle(video.title);
-    setUrl(video.url);
-    setEditingId(video.id);
+  const addNewVideo = () => {
+    if (!editData.title || !editData.url) {
+      alert("Title and URL are required");
+      return;
+    }
+
+    push(ref(db, `courses/${activeCourse}/videos`), editData)
+      .then(() => {
+        alert("Video added successfully");
+        setIsAddVideoExpanded(false);
+        setEditData({ title: "", url: "" });
+      })
+      .catch(error => alert("Error adding video: " + error.message));
   };
 
-  // Delete Video
   const handleDelete = (id) => {
     if (window.confirm("Are you sure you want to delete this video?")) {
-      remove(ref(db, `courses/${activeCourse}/videos/${id}`));
+      remove(ref(db, `courses/${activeCourse}/videos/${id}`))
+        .catch(error => alert("Error deleting video: " + error.message));
     }
   };
 
+  const toggleVideoPreview = (id) => {
+    setExpandedVideoId(expandedVideoId === id ? null : id);
+  };
+
+  const filteredVideos = videos.filter(video => 
+    video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    video.url.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div>
-      <h1 className="text-3xl font-bold text-white mb-6">Manage Videos</h1>
+    <div className="p-4 text-black min-h-screen">
+      <h1 className="text-3xl font-bold mb-6 text-white">Videos Management</h1>
 
       {/* Course Tabs */}
-      <div className="flex space-x-4 mb-6">
-        {courses.map((course) => (
+      <div className="flex space-x-2 mb-6 p-2">
+        {courses.map(course => (
           <button
             key={course}
-            className={`p-2 ${activeCourse === course ? "bg-blue-600" : "bg-gray-600"} rounded-md text-white`}
-            onClick={() => setActiveCourse(course)}
+            onClick={() => {
+              setActiveCourse(course);
+              setExpandedVideoId(null); // Collapse preview when changing course
+            }}
+            className={`px-4 py-2 rounded-md transition-colors ${
+              activeCourse === course 
+                ? "bg-blue-600 text-white" 
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
           >
-            {course}
+            {course} Course
           </button>
         ))}
       </div>
 
-      {/* Video Form */}
-      <form onSubmit={handleSubmit} className="bg-white p-6 shadow-lg rounded-lg mb-6">
-        <h2 className="text-xl font-semibold mb-4 text-[#0F172A]">
-          {editingId ? "Edit Video" : "Add New Video"}
-        </h2>
+      {/* Search and Add Video */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <input
           type="text"
-          placeholder="Video Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full text-black p-2 border rounded mb-3"
+          placeholder="Search videos..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="p-2 border rounded-md"
         />
-        <input
-          type="text"
-          placeholder="YouTube Embed URL"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          className="w-full text-black p-2 border rounded mb-3"
-        />
-        <button
-          type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          {editingId ? "Update Video" : "Add Video"}
-        </button>
-      </form>
+        <div className="md:col-span-2 flex justify-end">
+          <button
+            onClick={() => setIsAddVideoExpanded(!isAddVideoExpanded)}
+            className="bg-green-600 text-white p-2 rounded-md hover:bg-green-700"
+          >
+            {isAddVideoExpanded ? "Cancel" : "Add New Video"}
+          </button>
+        </div>
+      </div>
 
-      {/* Videos List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {videos.length > 0 ? (
-          videos.map((video) => (
-            <div key={video.id} className="bg-white p-4 rounded-lg shadow-lg">
-              <h3 className="text-lg font-semibold mb-2 text-[#0F172A]">{video.title}</h3>
-              <div className="aspect-w-16 aspect-h-9">
-                <iframe
-                  src={video.url}
-                  title={video.title}
-                  allowFullScreen
-                  className="w-full h-48 rounded-md"
-                ></iframe>
-              </div>
-              <div className="flex justify-between mt-3">
-                <button
-                  className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-                  onClick={() => handleEdit(video)}
-                >
-                  Edit
-                </button>
-                <button
-                  className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                  onClick={() => handleDelete(video.id)}
-                >
-                  Delete
-                </button>
-              </div>
+      {/* Add Video Form */}
+      {isAddVideoExpanded && (
+        <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+          <h2 className="text-xl font-semibold mb-4">Add New Video</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Title*</label>
+              <input
+                type="text"
+                name="title"
+                value={editData.title}
+                onChange={handleEditChange}
+                className="w-full p-2 border rounded-md"
+                required
+              />
             </div>
-          ))
-        ) : (
-          <p className="text-white">No videos available.</p>
+            <div>
+              <label className="block text-sm font-medium mb-1">YouTube URL*</label>
+              <input
+                type="url"
+                name="url"
+                value={editData.url}
+                onChange={handleEditChange}
+                className="w-full p-2 border rounded-md"
+                required
+                placeholder="https://youtube.com/embed/..."
+              />
+            </div>
+          </div>
+          <div className="mt-4 flex justify-end space-x-2">
+            <button
+              onClick={() => setIsAddVideoExpanded(false)}
+              className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={addNewVideo}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            >
+              Add Video
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Videos Table */}
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-300 text-black">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Title
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  URL
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredVideos.map(video => (
+                <React.Fragment key={video.id}>
+                  <tr className="hover:bg-gray-50 cursor-pointer" onClick={() => toggleVideoPreview(video.id)}>
+                    {editingId === video.id ? (
+                      <>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <input
+                            type="text"
+                            name="title"
+                            value={editData.title}
+                            onChange={handleEditChange}
+                            className="p-1 border rounded w-full"
+                          />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <input
+                            type="url"
+                            name="url"
+                            value={editData.url}
+                            onChange={handleEditChange}
+                            className="p-1 border rounded w-full"
+                          />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap space-x-2">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); saveEdit(); }}
+                            className="bg-green-600 text-white px-3 py-1 rounded text-sm"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setEditingId(null); }}
+                            className="bg-gray-500 text-white px-3 py-1 rounded text-sm"
+                          >
+                            Cancel
+                          </button>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="px-6 py-4 whitespace-nowrap font-medium">
+                          {video.title}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap truncate max-w-xs">
+                          <a 
+                            href={video.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {video.url}
+                          </a>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap space-x-2">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); startEditing(video); }}
+                            className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDelete(video.id); }}
+                            className="bg-red-600 text-white px-3 py-1 rounded text-sm"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                  {expandedVideoId === video.id && (
+                    <tr>
+                      <td colSpan="3" className="px-6 py-4 bg-gray-50">
+                        <div className="aspect-w-16 aspect-h-9 w-full max-w-2xl mx-auto">
+                          <iframe
+                            src={video.url}
+                            title={video.title}
+                            className="w-full h-96"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {filteredVideos.length === 0 && (
+          <div className="p-4 text-center text-gray-500">
+            No videos found matching your criteria
+          </div>
         )}
       </div>
     </div>

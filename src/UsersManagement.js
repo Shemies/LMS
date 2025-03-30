@@ -336,7 +336,7 @@ const UsersManagement = () => {
       <h1 className="text-3xl font-bold mb-6 text-white">Students Management</h1>
 
       {/* Course Tabs */}
-      <div className="flex space-x-2 mb-6 bg-white p-2 rounded-lg shadow">
+      <div className="flex space-x-2 mb-6 p-2">
         {["OL", "AS"].map(course => (
           <button
             key={course}

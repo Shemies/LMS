@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { db, ref, onValue, update } from "./firebase";
+import { ref, onValue, update } from "firebase/database";
+import { db } from "./firebase";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
 const AdminHomeworkTracking = () => {
+  // State declarations
   const [users, setUsers] = useState([]);
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
@@ -189,13 +191,13 @@ const AdminHomeworkTracking = () => {
   };
 
   return (
-    <div className="p-4 text-white min-h-screen">
-      <h1 className="text-2xl md:text-3xl font-bold mb-6">Homework Tracking</h1>
+    <div className="p-4 text-black min-h-screen">
+      <h1 className="text-3xl font-bold mb-6 text-white">Homework Tracking</h1>
 
       {/* Course Selection */}
-      <div className="bg-white p-4 rounded shadow mb-4 text-black">
-        <h2 className="text-lg md:text-xl font-semibold mb-2">Select Course</h2>
-        <div className="flex gap-2 overflow-x-auto pb-2">
+      <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+        <h2 className="text-xl font-semibold mb-4">Select Course</h2>
+        <div className="flex space-x-2 overflow-x-auto pb-2">
           {courses.map(course => (
             <button
               key={course}
@@ -204,8 +206,10 @@ const AdminHomeworkTracking = () => {
                 setSelectedSchool("");
                 setSelectedHomework(null);
               }}
-              className={`px-3 py-1 md:px-4 md:py-2 rounded-lg whitespace-nowrap ${
-                selectedCourse === course ? "bg-blue-600 text-white" : "bg-gray-200"
+              className={`px-4 py-2 rounded-md transition-colors whitespace-nowrap ${
+                selectedCourse === course 
+                  ? "bg-blue-600 text-white" 
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
             >
               {course}
@@ -216,12 +220,12 @@ const AdminHomeworkTracking = () => {
 
       {/* School Selection */}
       {selectedCourse && (
-        <div className="bg-white p-4 rounded shadow mb-4 text-black">
-          <h2 className="text-lg md:text-xl font-semibold mb-2">Select School</h2>
+        <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+          <h2 className="text-xl font-semibold mb-4">Select School</h2>
           <select
             value={selectedSchool}
             onChange={(e) => setSelectedSchool(e.target.value)}
-            className="border p-2 rounded w-full max-w-md"
+            className="p-2 border rounded-md w-full max-w-md"
           >
             <option value="">All Schools</option>
             {getSchools().map((school, index) => (
@@ -233,8 +237,8 @@ const AdminHomeworkTracking = () => {
 
       {/* Homework Selection */}
       {selectedSchool && (
-        <div className="bg-white p-4 rounded shadow mb-4 text-black">
-          <h2 className="text-lg md:text-xl font-semibold mb-2">Select Homework</h2>
+        <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+          <h2 className="text-xl font-semibold mb-4">Select Homework</h2>
           <select
             value={selectedHomework?.id || ""}
             onChange={(e) => {
@@ -242,7 +246,7 @@ const AdminHomeworkTracking = () => {
               const hw = homeworks.find(h => h.id === hwId);
               setSelectedHomework(hw);
             }}
-            className="border p-2 rounded w-full max-w-md"
+            className="p-2 border rounded-md w-full max-w-md"
           >
             <option value="">Select Homework</option>
             {homeworks.map(hw => (
@@ -254,39 +258,38 @@ const AdminHomeworkTracking = () => {
 
       {/* Search Bar */}
       {selectedHomework && (
-        <div className="bg-white p-4 rounded shadow mb-4 text-black">
+        <div className="bg-white p-4 rounded-lg shadow-md mb-6">
           <input
             type="text"
             placeholder="Search students by name or ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="border p-2 rounded w-full max-w-md"
+            className="p-2 border rounded-md w-full max-w-md"
           />
         </div>
       )}
 
       {/* Students List */}
       {selectedHomework && (
-        <div className="bg-white p-2 md:p-4 rounded shadow text-black overflow-x-auto">
-          <h2 className="text-lg md:text-xl font-semibold mb-4">
-            <span className="block md:inline">{selectedHomework.title}</span>
-            <span className="block text-sm md:inline md:ml-2">- {selectedSchool || "All Schools"}</span>
-            <span className="block md:float-right text-sm font-normal mt-1 md:mt-0">
-              Due: {selectedHomework.dueDate}
-            </span>
-          </h2>
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="p-4 border-b">
+            <h2 className="text-xl font-semibold">
+              {selectedHomework.title} - {selectedSchool || "All Schools"}
+            </h2>
+            <p className="text-gray-600">Due: {selectedHomework.dueDate}</p>
+          </div>
           
-          <div className="min-w-full">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="border p-2 text-left">ID</th>
-                  <th className="border p-2 text-left">Name</th>
-                  <th className="border p-2 text-left hidden sm:table-cell">School</th>
-                  <th className="border p-2">Status</th>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-300">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">ID</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider hidden sm:table-cell">School</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="bg-white divide-y divide-gray-200">
                 {filteredStudents.map(student => {
                   const currentStatus = 
                     statusUpdates[student.uid]?.[selectedHomework.id] || 
@@ -294,11 +297,11 @@ const AdminHomeworkTracking = () => {
                     "missing";
                   
                   return (
-                    <tr key={student.uid} className="border-b">
-                      <td className="border p-2">{student.studentId}</td>
-                      <td className="border p-2">{student.name}</td>
-                      <td className="border p-2 hidden sm:table-cell">{student.school}</td>
-                      <td className="border p-2 text-center">
+                    <tr key={student.uid} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap font-mono">{student.studentId}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{student.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">{student.school}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
                         <select
                           value={currentStatus}
                           onChange={(e) => handleStatusChange(student.uid, e.target.value)}
@@ -320,14 +323,20 @@ const AdminHomeworkTracking = () => {
             </table>
           </div>
 
+          {filteredStudents.length === 0 && (
+            <div className="p-4 text-center text-gray-500">
+              No students found matching your criteria
+            </div>
+          )}
+
           {filteredStudents.length > 0 && (
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4">
+            <div className="p-4 border-t flex flex-col sm:flex-row gap-4">
               <button
                 onClick={saveStatusUpdates}
-                className={`p-2 rounded text-white flex-1 ${
+                className={`px-4 py-2 rounded-md text-white ${
                   Object.keys(statusUpdates).length === 0 
                     ? "bg-gray-400 cursor-not-allowed" 
-                    : "bg-blue-500 hover:bg-blue-600"
+                    : "bg-blue-600 hover:bg-blue-700"
                 }`}
                 disabled={Object.keys(statusUpdates).length === 0}
               >
@@ -336,7 +345,7 @@ const AdminHomeworkTracking = () => {
               
               <button
                 onClick={generatePDFReport}
-                className="bg-red-500 hover:bg-red-600 text-white p-2 rounded flex items-center justify-center flex-1"
+                className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 flex items-center justify-center"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -344,10 +353,6 @@ const AdminHomeworkTracking = () => {
                 Export PDF
               </button>
             </div>
-          )}
-
-          {filteredStudents.length === 0 && (
-            <p className="text-center text-gray-500 py-4">No students found matching your criteria</p>
           )}
         </div>
       )}

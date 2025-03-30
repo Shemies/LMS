@@ -1,5 +1,5 @@
 import React from "react";
-import { FaInstagram } from "react-icons/fa"; // Import Instagram icon from react-icons
+import { FaInstagram, FaWhatsapp } from "react-icons/fa";
 
 const Footer = () => {
   return (
@@ -10,8 +10,21 @@ const Footer = () => {
           {/* Contact Information */}
           <div>
             <h3 className="text-xl font-semibold mb-4">Contact Us</h3>
-            <p className="text-gray-300">Phone: +20 100 4672283</p>
-            <p className="text-gray-300">Email: info@teamabbassi.com</p>
+            <div className="space-y-2">
+              <p className="text-gray-300">
+                Phone: +20 100 4672283
+              </p>
+              <a 
+                href="https://wa.me/201004672283" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center justify-center space-x-2 text-gray-300 hover:text-green-400 transition duration-300"
+              >
+                <FaWhatsapp className="w-5 h-5" />
+                <span>Chat on WhatsApp</span>
+              </a>
+              <p className="text-gray-300">Email: info@teamabbassi.com</p>
+            </div>
           </div>
 
           {/* Social Media Links */}
@@ -20,7 +33,7 @@ const Footer = () => {
             <div className="flex justify-center space-x-4">
               <button
                 onClick={() => window.open("https://www.instagram.com/team.abbassi/", "_blank")}
-                className="flex items-center space-x-2 hover:text-blue-300 transition duration-300"
+                className="flex items-center space-x-2 hover:text-pink-400 transition duration-300"
               >
                 <FaInstagram className="w-6 h-6" />
                 <span>Instagram</span>
