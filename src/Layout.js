@@ -77,6 +77,8 @@ const Layout = ({ children }) => {
     { name: "Homework", path: "/homeworks", icon: <CalendarCheck size={20} /> },
     { name: "Exams Grades", path: "/exams", icon: <BookOpenCheck size={20} /> },
     { name: "Past Papers", path: "/pastpapers", icon: <FileSearch size={20} /> },
+    { name: "Online Meetings", path: "/online-meetings", icon: <FileSearch size={20} /> },
+
     // { name: "Homework Status", path: "/homework_track", icon: <ClipboardCheck size={20} /> },
   ];
 

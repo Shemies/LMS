@@ -11,9 +11,12 @@ SwiperCore.use([Navigation, Pagination]);
 
 const Dashboard = () => {
   const [courses, setCourses] = useState({});
-  const [studentsCount, setStudentsCount] = useState({}); // Students count per course
-  const [homeworks, setHomeworks] = useState({}); // Homeworks per course
-  const [gradeData, setGradeData] = useState({});
+  const [studentsCount, setStudentsCount] = useState({});
+  const [homeworks, setHomeworks] = useState({});
+  const [registrationRequests, setRegistrationRequests] = useState([]);
+
+  // Colors for the progress pie chart
+  const COLORS = ["#3B82F6", "#E5E7EB"];
 
   // Fetch data from Firebase
   useEffect(() => {
@@ -24,63 +27,18 @@ const Dashboard = () => {
         const coursesData = snapshot.val();
         setCourses(coursesData);
 
-        // Calculate progress and grade distribution for each course
-        const gradeData = {};
-        const homeworksData = {}; // Homeworks grouped by course
-
-        // Sort courses by their index
-        const sortedCourses = Object.entries(coursesData).sort(
-          ([, a], [, b]) => a.index - b.index
-        );
-
-        // Fetch users data to determine the latest exam
-        const usersRef = ref(db, "users");
-        onValue(usersRef, (usersSnapshot) => {
-          if (usersSnapshot.exists()) {
-            const users = Object.values(usersSnapshot.val()).filter((user) => user.student);
-
-            // Determine the latest exam across all users
-            let latestExamKey = "";
-            users.forEach((user) => {
-              if (user.examGrades) {
-                const examKeys = Object.keys(user.examGrades);
-                examKeys.forEach((key) => {
-                  if (key > latestExamKey) {
-                    latestExamKey = key; // Update the latest exam key
-                  }
-                });
-              }
-            });
-
-            // Calculate grade distribution for each course using the latest exam
-            sortedCourses.forEach(([course, data]) => {
-              const gradesCount = { Star: 0, A: 0, B: 0, C: 0, D: 0, E: 0, U: 0 };
-              const courseUsers = users.filter((user) => user.enrolledCourse === course);
-
-              courseUsers.forEach((user) => {
-                if (user.examGrades && user.examGrades[latestExamKey]) {
-                  const grade = user.examGrades[latestExamKey].grade;
-                  if (gradesCount[grade] !== undefined) {
-                    gradesCount[grade] += 1;
-                  }
-                }
-              });
-
-              gradeData[course] = Object.entries(gradesCount).map(([key, value]) => ({
-                name: key,
-                value,
-              }));
-            });
-
-            // Update state
-            setGradeData(gradeData);
-          }
-        });
-
-        // Fetch homeworks for each course
-        sortedCourses.forEach(([course, data]) => {
+        // Fetch homeworks for each course (only due assignments)
+        const homeworksData = {};
+        const now = new Date();
+        
+        Object.entries(coursesData).forEach(([course, data]) => {
           if (data.homeworks) {
-            homeworksData[course] = Object.values(data.homeworks);
+            const dueHomeworks = Object.values(data.homeworks).filter(hw => {
+              if (!hw.dueDate) return false;
+              const dueDate = new Date(hw.dueDate);
+              return dueDate >= now;
+            });
+            homeworksData[course] = dueHomeworks;
           }
         });
 
@@ -93,7 +51,7 @@ const Dashboard = () => {
     onValue(usersRef, (snapshot) => {
       if (snapshot.exists()) {
         const users = Object.values(snapshot.val()).filter((user) => user.student);
-        const studentsCountData = {}; // Students count grouped by course
+        const studentsCountData = {};
         users.forEach((user) => {
           const course = user.enrolledCourse;
           if (course) {
@@ -106,21 +64,21 @@ const Dashboard = () => {
         setStudentsCount(studentsCountData);
       }
     });
+
+    // Fetch registration requests
+    const registrationRef = ref(db, "registrationRequests");
+    onValue(registrationRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const requests = Object.entries(snapshot.val()).map(([id, data]) => ({
+          id,
+          ...data
+        }));
+        setRegistrationRequests(requests);
+      } else {
+        setRegistrationRequests([]);
+      }
+    });
   }, []);
-
-  // Colors for the progress pie chart
-  const COLORS = ["#3B82F6", "#E5E7EB"];
-
-  // Colors for the grade distribution pie chart
-  const GRADE_COLORS = {
-    Star: "#00A36C",
-    A: "#90EE90",
-    B: "#2196F3",
-    C: "#FFEB3B",
-    D: "#F88379",
-    E: "#FF0000",
-    U: "#D2042D",
-  };
 
   return (
     <div className="p-6">
@@ -138,7 +96,7 @@ const Dashboard = () => {
             pagination={{ clickable: true, el: ".custom-pagination-syllabus" }}
           >
             {Object.entries(courses)
-              .sort(([, a], [, b]) => a.index - b.index) // Sort courses by index
+              .sort(([, a], [, b]) => a.index - b.index)
               .map(([course, data]) => (
                 <SwiperSlide key={course}>
                   <div className="flex flex-col items-center">
@@ -216,7 +174,7 @@ const Dashboard = () => {
                       assignments.map((hw, index) => (
                         <li key={index} className="p-3 bg-gray-100 rounded-lg">
                           <span className="font-semibold text-[#1E293B]">{hw.title}</span> -{" "}
-                          <span className="text-gray-600">{hw.dueDate}</span>
+                          <span className="text-gray-600">{new Date(hw.dueDate).toLocaleDateString()}</span>
                         </li>
                       ))
                     ) : (
@@ -230,43 +188,51 @@ const Dashboard = () => {
           <div className="custom-pagination-assignments mt-4 flex justify-center space-x-2"></div>
         </div>
 
-        {/* Box 3: Grade Distribution for All Courses */}
+        {/* Box 3: Registration Requests */}
         <div className="bg-white p-6 shadow-lg rounded-xl border border-gray-200 transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
-          <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Grade Distribution</h3>
-          <Swiper
-            spaceBetween={30}
-            slidesPerView={1}
-            navigation
-            pagination={{ clickable: true, el: ".custom-pagination-grades" }}
-          >
-            {Object.entries(gradeData).map(([course, grades]) => (
-              <SwiperSlide key={course}>
-                <div className="flex flex-col items-center">
-                  <h4 className="text-md font-semibold mb-2 text-[#0F172A]">{course}</h4>
-                  <ResponsiveContainer width="100%" height={150}>
-                    <PieChart>
-                      <Pie
-                        data={grades}
-                        cx="50%"
-                        cy="50%"
-                        startAngle={90}
-                        endAngle={-270}
-                        innerRadius="60%"
-                        outerRadius="90%"
-                        dataKey="value"
-                      >
-                        {grades.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={GRADE_COLORS[entry.name]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
-          <div className="custom-pagination-grades mt-4 flex justify-center space-x-2"></div>
+          <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Registration Requests</h3>
+          <div className="flex flex-col items-center">
+            <div className="text-5xl font-bold text-blue-600 mb-2">
+              {registrationRequests.length}
+            </div>
+            <p className="text-gray-600">Pending registrations</p>
+            <div className="mt-4 w-full">
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Name</th>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Course</th>
+                      <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {registrationRequests.slice(0, 3).map((request) => (
+                      <tr key={request.id}>
+                        <td className="px-4 py-2 text-sm text-gray-700">{request.name}</td>
+                        <td className="px-4 py-2 text-sm text-gray-700">{request.course}</td>
+                        <td className="px-4 py-2">
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            request.status === "Pending" ? "bg-yellow-100 text-yellow-800" :
+                            request.status === "Registered" ? "bg-green-100 text-green-800" :
+                            request.status === "Contacted" ? "bg-blue-100 text-blue-800" :
+                            "bg-red-100 text-red-800"
+                          }`}>
+                            {request.status || "Pending"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {registrationRequests.length > 3 && (
+                <p className="text-sm text-gray-500 mt-2">
+                  + {registrationRequests.length - 3} more requests
+                </p>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Box 4: Total Students for All Courses */}

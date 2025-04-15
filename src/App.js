@@ -31,6 +31,8 @@ import StudentHomeworkStatus from "./StudentHomeworkStatus";
 import AdminStudentReport from "./AdminStudentReport";
 import AssistantLayout from "./AssistantLayout";
 import AssistantDashboard from "./AssistantDashboard";
+import AdminMeetings from "./AdminMeetings";
+import StudentMeetings from "./StudentMeetings";
 
 function App() {
   return (
@@ -55,6 +57,8 @@ function App() {
             <Route path="/exams" element={<ProtectedRoute><Exams /></ProtectedRoute>} />
             <Route path="/pastpapers" element={<ProtectedRoute><PastPapers /></ProtectedRoute>} />
             <Route path="/homework_track" element={<ProtectedRoute><StudentHomeworkStatus /></ProtectedRoute>} />
+            <Route path="/online-meetings" element={<ProtectedRoute><StudentMeetings /></ProtectedRoute>} />
+
             
 
             {/* Admin Routes (Restricted) */}
@@ -75,6 +79,8 @@ function App() {
               <Route path="registration-requests" element={<RegistrationRequests />} />
               <Route path="hwtracking" element={<AdminHomeworkTracking />} />
               <Route path="studentreport" element={<AdminStudentReport />} />
+              <Route path="online-meeting" element={<AdminMeetings />} />
+
 
               
             </Route>

@@ -5,7 +5,6 @@ import { ref, push, onValue, update, remove } from "firebase/database";
 import { db } from "./firebase";
 import { generateStudentReport } from "./StudentReport";
 
-
 const UsersManagement = () => {
   // State declarations
   const [users, setUsers] = useState([]);
@@ -21,14 +20,17 @@ const UsersManagement = () => {
     homeworkStatus: {}
   });
   const [importData, setImportData] = useState([]);
+  const [courses, setCourses] = useState(["OL", "AS"]);
   const [activeCourse, setActiveCourse] = useState("OL");
+  const [newCourseName, setNewCourseName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [schoolFilter, setSchoolFilter] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [isImportExportExpanded, setIsImportExportExpanded] = useState(false);
   const [isAddUserExpanded, setIsAddUserExpanded] = useState(false);
+  const [isAddCourseExpanded, setIsAddCourseExpanded] = useState(false);
 
-  // Fetch all users from Firebase
+  // Fetch all users and courses from Firebase
   useEffect(() => {
     const usersRef = ref(db, "users");
     onValue(usersRef, (snapshot) => {
@@ -45,9 +47,20 @@ const UsersManagement = () => {
         setUsers([]);
       }
     });
+
+    const coursesRef = ref(db, "courses");
+    onValue(coursesRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const coursesData = Object.keys(snapshot.val());
+        setCourses(coursesData);
+        if (coursesData.length > 0 && !coursesData.includes(activeCourse)) {
+          setActiveCourse(coursesData[0]);
+        }
+      }
+    });
   }, []);
 
-  // Get next available student ID (0001, 0002, etc.)
+  // Get next available student ID
   const getNextStudentId = async () => {
     const usersRef = ref(db, "users");
     return new Promise((resolve) => {
@@ -146,7 +159,44 @@ const UsersManagement = () => {
     }
   };
 
-  
+  // Add new course
+  const addNewCourse = () => {
+    if (!newCourseName.trim()) {
+      alert("Please enter a course name");
+      return;
+    }
+
+    const courseName = newCourseName.trim().toUpperCase();
+    if (courses.includes(courseName)) {
+      alert("Course already exists");
+      return;
+    }
+
+    update(ref(db, `courses/${courseName}`), {
+      name: courseName,
+      createdAt: new Date().toISOString()
+    })
+      .then(() => {
+        setNewCourseName("");
+        setIsAddCourseExpanded(false);
+        alert(`Course ${courseName} added successfully`);
+      })
+      .catch(error => alert("Error adding course: " + error.message));
+  };
+
+  // Remove course
+  const removeCourse = (courseName) => {
+    if (window.confirm(`Are you sure you want to remove course ${courseName}? This will not delete students enrolled in this course.`)) {
+      remove(ref(db, `courses/${courseName}`))
+        .then(() => {
+          alert(`Course ${courseName} removed successfully`);
+          if (activeCourse === courseName && courses.length > 1) {
+            setActiveCourse(courses.find(c => c !== courseName));
+          }
+        })
+        .catch(error => alert("Error removing course: " + error.message));
+    }
+  };
 
   // File import handlers
   const handleCSVUpload = (e) => {
@@ -183,24 +233,23 @@ const UsersManagement = () => {
       const jsonData = XLSX.utils.sheet_to_json(sheet);
 
       const usersData = jsonData
-      .filter(row => row.Name && row.Email) // Only rows with name and email
-      .map(row => ({
-        name: row.Name || "",
-        email: row.Email || "",
-        school: row.School || "",
-        enrolledCourse: row.Course || activeCourse,
-        student: true,
-        examGrades: {},
-        homeworkStatus: {}
-      }));
+        .filter(row => row.Name && row.Email)
+        .map(row => ({
+          name: row.Name || "",
+          email: row.Email || "",
+          school: row.School || "",
+          enrolledCourse: row.Course || activeCourse,
+          student: true,
+          examGrades: {},
+          homeworkStatus: {}
+        }));
     
-    setImportData(usersData);
-  };
+      setImportData(usersData);
+    };
     reader.readAsArrayBuffer(file);
   };
 
-  
-  // Updated import handler
+  // Import handler
   const handleAddImportedUsers = async () => {
     if (importData.length === 0) {
       alert("No valid data to import");
@@ -212,7 +261,6 @@ const UsersManagement = () => {
       const lastId = await getNextStudentId();
       let nextIdNum = parseInt(lastId);
       
-      // Prepare batch update
       const updates = {};
       
       importData.forEach(user => {
@@ -229,7 +277,6 @@ const UsersManagement = () => {
         nextIdNum++;
       });
 
-      // Execute batch update
       await update(ref(db), updates);
       
       const startId = (nextIdNum - importData.length).toString().padStart(4, '0');
@@ -335,21 +382,67 @@ const UsersManagement = () => {
     <div className="p-4 text-black min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-white">Students Management</h1>
 
-      {/* Course Tabs */}
-      <div className="flex space-x-2 mb-6 p-2">
-        {["OL", "AS"].map(course => (
+      {/* Course Management Section */}
+      <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Course Management</h2>
           <button
-            key={course}
-            onClick={() => setActiveCourse(course)}
-            className={`px-4 py-2 rounded-md transition-colors ${
-              activeCourse === course 
-                ? "bg-blue-600 text-white" 
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
+            onClick={() => setIsAddCourseExpanded(!isAddCourseExpanded)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
           >
-            {course} Course
+            {isAddCourseExpanded ? "Cancel" : "Add New Course"}
           </button>
-        ))}
+        </div>
+
+        {isAddCourseExpanded && (
+          <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div>
+              <label className="block text-sm font-medium mb-1">New Course Name</label>
+              <input
+                type="text"
+                value={newCourseName}
+                onChange={(e) => setNewCourseName(e.target.value)}
+                className="w-full p-2 border rounded-md"
+                placeholder="e.g., AL, NS"
+              />
+            </div>
+            <button
+              onClick={addNewCourse}
+              className="bg-green-600 text-white p-2 rounded-md hover:bg-green-700"
+            >
+              Add Course
+            </button>
+          </div>
+        )}
+
+        {/* Course Tabs with Remove Option */}
+        <div className="flex flex-wrap gap-2">
+          {courses.map(course => (
+            <div key={course} className="flex items-center">
+              <button
+                onClick={() => setActiveCourse(course)}
+                className={`px-4 py-2 rounded-md transition-colors ${
+                  activeCourse === course 
+                    ? "bg-blue-600 text-white" 
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                {course} Course
+              </button>
+              {courses.length > 1 && (
+                <button
+                  onClick={() => removeCourse(course)}
+                  className="ml-1 p-1 text-red-600 hover:text-red-800"
+                  title={`Remove ${course} course`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Search and Filters */}
@@ -424,8 +517,9 @@ const UsersManagement = () => {
                 onChange={handleEditChange}
                 className="w-full p-2 border rounded-md"
               >
-                <option value="OL">OL</option>
-                <option value="AS">AS</option>
+                {courses.map(course => (
+                  <option key={course} value={course}>{course}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -530,12 +624,17 @@ const UsersManagement = () => {
                 >
                   Email {sortConfig.key === "email" && (sortConfig.direction === "asc" ? "↑" : "↓")}
                 </th>
-                
                 <th 
                   className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer"
                   onClick={() => handleSort("school")}
                 >
                   School {sortConfig.key === "school" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                </th>
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer"
+                  onClick={() => handleSort("enrolledCourse")}
+                >
+                  Course {sortConfig.key === "enrolledCourse" && (sortConfig.direction === "asc" ? "↑" : "↓")}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                   Actions
@@ -569,17 +668,6 @@ const UsersManagement = () => {
                         />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <select
-                          name="enrolledCourse"
-                          value={editData.enrolledCourse}
-                          onChange={handleEditChange}
-                          className="p-1 border rounded w-full"
-                        >
-                          <option value="OL">OL</option>
-                          <option value="AS">AS</option>
-                        </select>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
                         <input
                           type="text"
                           name="school"
@@ -587,6 +675,18 @@ const UsersManagement = () => {
                           onChange={handleEditChange}
                           className="p-1 border rounded w-full"
                         />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <select
+                          name="enrolledCourse"
+                          value={editData.enrolledCourse}
+                          onChange={handleEditChange}
+                          className="p-1 border rounded w-full"
+                        >
+                          {courses.map(course => (
+                            <option key={course} value={course}>{course}</option>
+                          ))}
+                        </select>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap space-x-2">
                         <button
@@ -614,9 +714,11 @@ const UsersManagement = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         {user.email}
                       </td>
-                      
                       <td className="px-6 py-4 whitespace-nowrap">
                         {user.school}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {user.enrolledCourse}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap space-x-2">
                         <button

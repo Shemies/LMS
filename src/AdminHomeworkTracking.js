@@ -169,7 +169,7 @@ const AdminHomeworkTracking = () => {
               data.cell.styles.fillColor = [220, 255, 220];
             } else if (status === 'incomplete') {
               data.cell.styles.fillColor = [255, 255, 200];
-            } else {
+            } else if (status === 'missing') {
               data.cell.styles.fillColor = [255, 220, 220];
             }
           }

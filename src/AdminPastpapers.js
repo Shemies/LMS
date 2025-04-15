@@ -122,7 +122,7 @@ const AdminPastPapers = () => {
               setSelectedYear(null); // Reset selected year when switching courses
             }}
             className={`p-2 rounded-lg ${
-              selectedCourse === course ? "bg-blue-600 text-white" : "bg-gray-200"
+              selectedCourse === course ? "bg-blue-600 text-white" : "bg-gray-200 text-black"
             }`}
           >
             {course}

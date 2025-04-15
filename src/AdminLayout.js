@@ -48,7 +48,9 @@ const AdminLayout = () => {
             { name: "Homework Tracking", path: "/admin/hwtracking", icon: <ClipboardCheck size={18} /> },
             { name: "Exams", path: "/admin/exams", icon: <Bookmark size={18} /> },
             { name: "Past Papers", path: "/admin/pastpapers", icon: <FileArchive size={18} /> },
+            { name: "Online Meetings", path: "/admin/online-meeting", icon: <UserPlus size={18} /> },
             { name: "Registration Requests", path: "/admin/registration-requests", icon: <UserPlus size={18} /> },
+
             
             // { name: "Student Report", path: "/admin/studentreport" },
 

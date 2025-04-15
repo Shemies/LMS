@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ref, onValue, set, remove, push } from "firebase/database";
+import { ref, onValue, remove, push, update } from "firebase/database";
 import { db } from "./firebase";
 
 const AdminVideos = () => {
@@ -7,12 +7,20 @@ const AdminVideos = () => {
   const [courses, setCourses] = useState([]);
   const [activeCourse, setActiveCourse] = useState("OL");
   const [editingId, setEditingId] = useState(null);
-  const [editData, setEditData] = useState({ title: "", url: "" });
+  const [editData, setEditData] = useState({ 
+    title: "", 
+    url: "", 
+    published: true 
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddVideoExpanded, setIsAddVideoExpanded] = useState(false);
   const [expandedVideoId, setExpandedVideoId] = useState(null);
+  const [sortConfig, setSortConfig] = useState({ 
+    key: null, 
+    direction: "asc" 
+  });
 
-  // Fetch courses and videos
+  // Fetch courses from Firebase
   useEffect(() => {
     const coursesRef = ref(db, "courses");
     const unsubscribeCourses = onValue(coursesRef, (snapshot) => {
@@ -26,30 +34,45 @@ const AdminVideos = () => {
     });
 
     return () => unsubscribeCourses();
-  }, []);
+  }, [activeCourse]); // Added activeCourse to dependency array
 
+  // Fetch videos for the active course from Firebase
   useEffect(() => {
     if (!activeCourse) return;
     
     const videosRef = ref(db, `courses/${activeCourse}/videos`);
     const unsubscribeVideos = onValue(videosRef, (snapshot) => {
-      setVideos(snapshot.exists() 
-        ? Object.entries(snapshot.val()).map(([id, data]) => ({ id, ...data })) 
-        : []);
+      if (snapshot.exists()) {
+        const videosData = Object.entries(snapshot.val()).map(([id, data]) => ({ 
+          id, 
+          ...data,
+          published: data.published !== false // Default to true if not set
+        }));
+        setVideos(videosData);
+      } else {
+        setVideos([]);
+      }
     });
 
     return () => unsubscribeVideos();
   }, [activeCourse]);
 
   const handleEditChange = (e) => {
-    const { name, value } = e.target;
-    setEditData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setEditData(prev => ({ 
+      ...prev, 
+      [name]: type === 'checkbox' ? checked : value 
+    }));
   };
 
   const startEditing = (video) => {
     setEditingId(video.id);
-    setEditData({ title: video.title, url: video.url });
-    setExpandedVideoId(null); // Collapse preview when editing
+    setEditData({ 
+      title: video.title, 
+      url: video.url,
+      published: video.published !== false
+    });
+    setExpandedVideoId(null);
   };
 
   const saveEdit = () => {
@@ -58,7 +81,7 @@ const AdminVideos = () => {
       return;
     }
 
-    set(ref(db, `courses/${activeCourse}/videos/${editingId}`), editData)
+    update(ref(db, `courses/${activeCourse}/videos/${editingId}`), editData)
       .then(() => {
         alert("Video updated successfully");
         setEditingId(null);
@@ -72,11 +95,14 @@ const AdminVideos = () => {
       return;
     }
 
-    push(ref(db, `courses/${activeCourse}/videos`), editData)
+    push(ref(db, `courses/${activeCourse}/videos`), {
+      ...editData,
+      published: editData.published !== false
+    })
       .then(() => {
         alert("Video added successfully");
         setIsAddVideoExpanded(false);
-        setEditData({ title: "", url: "" });
+        setEditData({ title: "", url: "", published: true });
       })
       .catch(error => alert("Error adding video: " + error.message));
   };
@@ -92,7 +118,49 @@ const AdminVideos = () => {
     setExpandedVideoId(expandedVideoId === id ? null : id);
   };
 
-  const filteredVideos = videos.filter(video => 
+  const togglePublishStatus = async (id, currentStatus) => {
+    try {
+      await update(ref(db, `courses/${activeCourse}/videos/${id}`), {
+        published: !currentStatus
+      });
+    } catch (error) {
+      alert("Error updating publish status: " + error.message);
+    }
+  };
+
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedVideos = React.useMemo(() => {
+    let sortableVideos = [...videos];
+    if (sortConfig.key) {
+      sortableVideos.sort((a, b) => {
+        // Special handling for boolean fields
+        if (sortConfig.key === 'published') {
+          const aValue = a.published ? 1 : 0;
+          const bValue = b.published ? 1 : 0;
+          return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
+        }
+        
+        // Default sorting for other fields
+        const aValue = a[sortConfig.key] || "";
+        const bValue = b[sortConfig.key] || "";
+        if (sortConfig.direction === "asc") {
+          return aValue.toString().localeCompare(bValue.toString());
+        } else {
+          return bValue.toString().localeCompare(aValue.toString());
+        }
+      });
+    }
+    return sortableVideos;
+  }, [videos, sortConfig]);
+
+  const filteredVideos = sortedVideos.filter(video => 
     video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     video.url.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -108,7 +176,7 @@ const AdminVideos = () => {
             key={course}
             onClick={() => {
               setActiveCourse(course);
-              setExpandedVideoId(null); // Collapse preview when changing course
+              setExpandedVideoId(null);
             }}
             className={`px-4 py-2 rounded-md transition-colors ${
               activeCourse === course 
@@ -168,6 +236,19 @@ const AdminVideos = () => {
                 placeholder="https://youtube.com/embed/..."
               />
             </div>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="publish-new"
+                name="published"
+                checked={editData.published}
+                onChange={handleEditChange}
+                className="h-5 w-5"
+              />
+              <label htmlFor="publish-new" className="ml-2 text-sm">
+                Publish (visible to students)
+              </label>
+            </div>
           </div>
           <div className="mt-4 flex justify-end space-x-2">
             <button
@@ -192,11 +273,20 @@ const AdminVideos = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-300 text-black">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                  Title
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer"
+                  onClick={() => handleSort("title")}
+                >
+                  Title {sortConfig.key === "title" && (sortConfig.direction === "asc" ? "↑" : "↓")}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                   URL
+                </th>
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer"
+                  onClick={() => handleSort("published")}
+                >
+                  Status {sortConfig.key === "published" && (sortConfig.direction === "asc" ? "↑" : "↓")}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                   Actions
@@ -225,6 +315,15 @@ const AdminVideos = () => {
                             value={editData.url}
                             onChange={handleEditChange}
                             className="p-1 border rounded w-full"
+                          />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <input
+                            type="checkbox"
+                            name="published"
+                            checked={editData.published}
+                            onChange={handleEditChange}
+                            className="h-5 w-5"
                           />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap space-x-2">
@@ -258,6 +357,20 @@ const AdminVideos = () => {
                             {video.url}
                           </a>
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <input
+                            type="checkbox"
+                            checked={video.published !== false}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              togglePublishStatus(video.id, video.published !== false);
+                            }}
+                            className="h-5 w-5"
+                          />
+                          <span className="ml-2">
+                            {video.published !== false ? "Published" : "Draft"}
+                          </span>
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap space-x-2">
                           <button
                             onClick={(e) => { e.stopPropagation(); startEditing(video); }}
@@ -271,13 +384,19 @@ const AdminVideos = () => {
                           >
                             Delete
                           </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); toggleVideoPreview(video.id); }}
+                            className="bg-purple-600 text-white px-3 py-1 rounded text-sm"
+                          >
+                            {expandedVideoId === video.id ? "Hide" : "Preview"}
+                          </button>
                         </td>
                       </>
                     )}
                   </tr>
                   {expandedVideoId === video.id && (
                     <tr>
-                      <td colSpan="3" className="px-6 py-4 bg-gray-50">
+                      <td colSpan="4" className="px-6 py-4 bg-gray-50">
                         <div className="aspect-w-16 aspect-h-9 w-full max-w-2xl mx-auto">
                           <iframe
                             src={video.url}

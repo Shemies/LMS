@@ -3,24 +3,28 @@ import { db, ref } from "./firebase";
 import { onValue, update, push, remove } from "firebase/database";
 
 const AdminChapters = () => {
+  // State declarations
   const [chapters, setChapters] = useState([]);
   const [courses, setCourses] = useState([]);
-  const [activeCourse, setActiveCourse] = useState("AS"); // Default active course
+  const [activeCourse, setActiveCourse] = useState("AS");
   const [newChapterName, setNewChapterName] = useState("");
-  const [editingChapter, setEditingChapter] = useState(null);
-  const [editChapterName, setEditChapterName] = useState("");
-  const [completionDate, setCompletionDate] = useState("");
+  const [editingChapterId, setEditingChapterId] = useState(null);
+  const [editData, setEditData] = useState({
+    name: "",
+    done: false,
+    completedAt: ""
+  });
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch courses from Firebase
   useEffect(() => {
     const coursesRef = ref(db, "courses");
     const unsubscribeCourses = onValue(coursesRef, (snapshot) => {
       if (snapshot.exists()) {
-        const coursesData = Object.keys(snapshot.val());
-        setCourses(coursesData);
+        setCourses(Object.keys(snapshot.val()));
       }
     });
-
     return () => unsubscribeCourses();
   }, []);
 
@@ -37,10 +41,9 @@ const AdminChapters = () => {
         }));
         setChapters(chaptersArray);
       } else {
-        setChapters([]); // Reset chapters if no data exists
+        setChapters([]);
       }
     });
-
     return () => unsubscribeChapters();
   }, [activeCourse]);
 
@@ -53,11 +56,6 @@ const AdminChapters = () => {
 
     try {
       await update(ref(db, `courses/${activeCourse}/chapters/${id}`), updates);
-      setChapters((prevChapters) =>
-        prevChapters.map((chapter) =>
-          chapter.id === id ? { ...chapter, ...updates } : chapter
-        )
-      );
     } catch (error) {
       console.error("Error updating chapter:", error);
     }
@@ -69,13 +67,11 @@ const AdminChapters = () => {
 
     try {
       const chaptersRef = ref(db, `courses/${activeCourse}/chapters`);
-      const newChapterRef = push(chaptersRef);
-      await update(newChapterRef, { 
+      await push(chaptersRef, { 
         name: newChapterName, 
         done: false,
         completedAt: null
       });
-
       setNewChapterName("");
     } catch (error) {
       console.error("Error adding chapter:", error);
@@ -84,40 +80,47 @@ const AdminChapters = () => {
 
   // Delete chapter
   const handleDeleteChapter = async (id) => {
-    try {
-      await remove(ref(db, `courses/${activeCourse}/chapters/${id}`));
-      setChapters((prevChapters) => prevChapters.filter((chapter) => chapter.id !== id));
-    } catch (error) {
-      console.error("Error deleting chapter:", error);
+    if (window.confirm("Are you sure you want to delete this chapter?")) {
+      try {
+        await remove(ref(db, `courses/${activeCourse}/chapters/${id}`));
+      } catch (error) {
+        console.error("Error deleting chapter:", error);
+      }
     }
   };
 
   // Start editing a chapter
   const startEditing = (chapter) => {
-    setEditingChapter(chapter.id);
-    setEditChapterName(chapter.name);
-    setCompletionDate(chapter.completedAt ? chapter.completedAt.split('T')[0] : "");
+    setEditingChapterId(chapter.id);
+    setEditData({
+      name: chapter.name,
+      done: chapter.done,
+      completedAt: chapter.completedAt ? chapter.completedAt.split('T')[0] : ""
+    });
+  };
+
+  // Handle edit form changes
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   // Save edited chapter
   const saveEdit = async () => {
-    if (!editChapterName.trim()) return;
+    if (!editData.name.trim()) return;
 
     const updates = {
-      name: editChapterName,
-      completedAt: completionDate ? new Date(completionDate).toISOString() : null
+      name: editData.name,
+      done: editData.done,
+      completedAt: editData.completedAt ? new Date(editData.completedAt).toISOString() : null
     };
 
     try {
-      await update(ref(db, `courses/${activeCourse}/chapters/${editingChapter}`), updates);
-      setChapters((prevChapters) =>
-        prevChapters.map((chapter) =>
-          chapter.id === editingChapter ? { ...chapter, ...updates } : chapter
-        )
-      );
-      setEditingChapter(null);
-      setEditChapterName("");
-      setCompletionDate("");
+      await update(ref(db, `courses/${activeCourse}/chapters/${editingChapterId}`), updates);
+      setEditingChapterId(null);
     } catch (error) {
       console.error("Error updating chapter:", error);
     }
@@ -125,127 +128,219 @@ const AdminChapters = () => {
 
   // Cancel editing
   const cancelEdit = () => {
-    setEditingChapter(null);
-    setEditChapterName("");
-    setCompletionDate("");
+    setEditingChapterId(null);
+    setEditData({
+      name: "",
+      done: false,
+      completedAt: ""
+    });
   };
 
+  // Handle sorting
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // Sorting and filtering
+  const sortedChapters = React.useMemo(() => {
+    let sortableChapters = [...chapters];
+    if (sortConfig.key) {
+      sortableChapters.sort((a, b) => {
+        // Special handling for dates
+        if (sortConfig.key === 'completedAt') {
+          const aValue = a.completedAt ? new Date(a.completedAt).getTime() : 0;
+          const bValue = b.completedAt ? new Date(b.completedAt).getTime() : 0;
+          return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
+        }
+        
+        // Default sorting for other fields
+        const aValue = a[sortConfig.key] || "";
+        const bValue = b[sortConfig.key] || "";
+        if (sortConfig.direction === "asc") {
+          return aValue.toString().localeCompare(bValue.toString());
+        } else {
+          return bValue.toString().localeCompare(aValue.toString());
+        }
+      });
+    }
+    return sortableChapters.filter(chapter => 
+      chapter.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [chapters, sortConfig, searchQuery]);
+
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Chapters Management</h2>
+    <div className="p-4 text-black min-h-screen">
+      <h1 className="text-3xl font-bold mb-6 text-white">Chapters Management</h1>
 
       {/* Course Tabs */}
-      <div className="flex space-x-4 mb-6">
-        {courses.map((course) => (
+      <div className="flex space-x-2 mb-6 p-2">
+        {courses.map(course => (
           <button
             key={course}
-            className={`p-2 ${activeCourse === course ? "bg-blue-600" : "bg-gray-600"} rounded-md text-white`}
             onClick={() => setActiveCourse(course)}
+            className={`px-4 py-2 rounded-md transition-colors ${
+              activeCourse === course 
+                ? "bg-blue-600 text-white" 
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
           >
-            {course}
+            {course} Course
           </button>
         ))}
       </div>
 
-      {/* Add Chapter */}
-      <div className="mb-4 flex gap-2">
+      {/* Search and Add Chapter */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <input
           type="text"
-          placeholder="New chapter name"
-          value={newChapterName}
-          onChange={(e) => setNewChapterName(e.target.value)}
-          className="border px-3 py-2 rounded w-1/3 text-black"
+          placeholder="Search chapters..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="p-2 border rounded-md"
         />
-        <button
-          onClick={handleAddChapter}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          Add Chapter
-        </button>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="New chapter name"
+            value={newChapterName}
+            onChange={(e) => setNewChapterName(e.target.value)}
+            className="w-full p-2 border rounded-md"
+          />
+          <button
+            onClick={handleAddChapter}
+            className="bg-green-600 text-white p-2 rounded-md hover:bg-green-700 whitespace-nowrap"
+          >
+            Add Chapter
+          </button>
+        </div>
       </div>
 
       {/* Chapters Table */}
-      <table className="min-w-full bg-white border border-gray-300 shadow-md text-black">
-        <thead>
-          <tr className="bg-gray-200">
-            <th className="border px-4 py-2">Chapter Name</th>
-            <th className="border px-4 py-2">Completed</th>
-            <th className="border px-4 py-2">Completion Date</th>
-            <th className="border px-4 py-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {chapters.map((chapter) => (
-            <tr key={chapter.id} className="text-center">
-              <td className="border px-4 py-2">
-                {editingChapter === chapter.id ? (
-                  <input
-                    type="text"
-                    value={editChapterName}
-                    onChange={(e) => setEditChapterName(e.target.value)}
-                    className="border px-2 py-1 rounded w-full"
-                  />
-                ) : (
-                  chapter.name
-                )}
-              </td>
-              <td className="border px-4 py-2">
-                <input
-                  type="checkbox"
-                  checked={chapter.done}
-                  onChange={() => handleCheckboxChange(chapter.id, chapter.done)}
-                  className="w-5 h-5"
-                />
-              </td>
-              <td className="border px-4 py-2">
-                {editingChapter === chapter.id ? (
-                  <input
-                    type="date"
-                    value={completionDate}
-                    onChange={(e) => setCompletionDate(e.target.value)}
-                    className="border px-2 py-1 rounded"
-                  />
-                ) : (
-                  chapter.completedAt ? new Date(chapter.completedAt).toLocaleDateString() : "-"
-                )}
-              </td>
-              <td className="border px-4 py-2 space-x-2">
-                {editingChapter === chapter.id ? (
-                  <>
-                    <button
-                      onClick={saveEdit}
-                      className="bg-green-500 text-white px-3 py-1 rounded"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={cancelEdit}
-                      className="bg-gray-500 text-white px-3 py-1 rounded"
-                    >
-                      Cancel
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => startEditing(chapter)}
-                      className="bg-blue-500 text-white px-3 py-1 rounded"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteChapter(chapter.id)}
-                      className="bg-red-500 text-white px-3 py-1 rounded"
-                    >
-                      Delete
-                    </button>
-                  </>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-300 text-black">
+              <tr>
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer"
+                  onClick={() => handleSort("name")}
+                >
+                  Chapter Name {sortConfig.key === "name" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                </th>
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer"
+                  onClick={() => handleSort("done")}
+                >
+                  Status {sortConfig.key === "done" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                </th>
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer"
+                  onClick={() => handleSort("completedAt")}
+                >
+                  Completion Date {sortConfig.key === "completedAt" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {sortedChapters.map(chapter => (
+                <tr key={chapter.id} className="hover:bg-gray-50">
+                  {editingChapterId === chapter.id ? (
+                    <>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="text"
+                          name="name"
+                          value={editData.name}
+                          onChange={handleEditChange}
+                          className="p-1 border rounded w-full"
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          name="done"
+                          checked={editData.done}
+                          onChange={(e) => setEditData(prev => ({
+                            ...prev,
+                            done: e.target.checked
+                          }))}
+                          className="w-5 h-5"
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="date"
+                          name="completedAt"
+                          value={editData.completedAt}
+                          onChange={handleEditChange}
+                          className="p-1 border rounded"
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap space-x-2">
+                        <button
+                          onClick={saveEdit}
+                          className="bg-green-600 text-white px-3 py-1 rounded text-sm"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={cancelEdit}
+                          className="bg-gray-500 text-white px-3 py-1 rounded text-sm"
+                        >
+                          Cancel
+                        </button>
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td className="px-6 py-4 whitespace-nowrap font-medium">
+                        {chapter.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          checked={chapter.done}
+                          onChange={() => handleCheckboxChange(chapter.id, chapter.done)}
+                          className="w-5 h-5"
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {chapter.completedAt ? new Date(chapter.completedAt).toLocaleDateString() : "-"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap space-x-2">
+                        <button
+                          onClick={() => startEditing(chapter)}
+                          className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteChapter(chapter.id)}
+                          className="bg-red-600 text-white px-3 py-1 rounded text-sm"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {sortedChapters.length === 0 && (
+          <div className="p-4 text-center text-gray-500">
+            No chapters found {searchQuery ? "matching your search" : "for this course"}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

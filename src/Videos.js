@@ -11,31 +11,24 @@ const Videos = () => {
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredVideos, setFilteredVideos] = useState([]);
-  const [activeVideoId, setActiveVideoId] = useState(null); // Track the currently active video
+  const [activeVideoId, setActiveVideoId] = useState(null);
 
   useEffect(() => {
-    // Listen for authentication state changes
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
-        console.log("User is authenticated:", user.email); // Debugging
-
-        // Fetch all users to find the one matching the authenticated user
         const usersRef = ref(db, "users");
         const unsubscribeUsers = onValue(
           usersRef,
           (snapshot) => {
             if (snapshot.exists()) {
               const usersData = snapshot.val();
-
-              // Find the user with the matching email (or other unique identifier)
               const authenticatedUser = Object.values(usersData).find(
                 (u) => u.email === user.email
               );
 
               if (authenticatedUser) {
-                console.log("Authenticated user data:", authenticatedUser); // Debugging
                 if (authenticatedUser.enrolledCourse) {
-                  setEnrolledCourse(authenticatedUser.enrolledCourse); // Set enrolled course
+                  setEnrolledCourse(authenticatedUser.enrolledCourse);
                 } else {
                   setError("No enrolled course found. Please enroll in a course.");
                 }
@@ -54,32 +47,35 @@ const Videos = () => {
           }
         );
 
-        return () => unsubscribeUsers(); // Cleanup users listener
+        return () => unsubscribeUsers();
       } else {
         setError("User not authenticated. Please log in.");
         setLoading(false);
       }
     });
 
-    return () => unsubscribeAuth(); // Cleanup auth listener
+    return () => unsubscribeAuth();
   }, []);
 
   useEffect(() => {
-    if (!enrolledCourse) return; // Exit if no enrolled course
+    if (!enrolledCourse) return;
 
-    // Fetch videos for the enrolled course
     const videosRef = ref(db, `courses/${enrolledCourse}/videos`);
     const unsubscribeVideos = onValue(
       videosRef,
       (snapshot) => {
         if (snapshot.exists()) {
           const videoData = snapshot.val();
-          const videoList = Object.keys(videoData).map((key) => ({
-            id: key,
-            ...videoData[key],
-          }));
+          // Filter videos to only include published ones (published !== false)
+          const videoList = Object.keys(videoData)
+            .map((key) => ({
+              id: key,
+              ...videoData[key],
+            }))
+            .filter(video => video.published !== false); // Only show published videos
+          
           setVideos(videoList);
-          setFilteredVideos(videoList); // Initialize filtered videos
+          setFilteredVideos(videoList);
         } else {
           setVideos([]);
           setFilteredVideos([]);
@@ -94,10 +90,9 @@ const Videos = () => {
       }
     );
 
-    return () => unsubscribeVideos(); // Cleanup videos listener
-  }, [enrolledCourse]); // Re-fetch when enrolledCourse changes
+    return () => unsubscribeVideos();
+  }, [enrolledCourse]);
 
-  // Handle search
   useEffect(() => {
     if (searchQuery) {
       const filtered = videos.filter((video) =>
@@ -109,13 +104,8 @@ const Videos = () => {
     }
   }, [searchQuery, videos]);
 
-  // Toggle video visibility
   const toggleVideo = (videoId) => {
-    if (activeVideoId === videoId) {
-      setActiveVideoId(null); // Close the video if it's already open
-    } else {
-      setActiveVideoId(videoId); // Open the clicked video
-    }
+    setActiveVideoId(activeVideoId === videoId ? null : videoId);
   };
 
   if (loading) {
@@ -125,7 +115,7 @@ const Videos = () => {
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
         </div>
       </Layout>
-    ); // Show loading spinner
+    );
   }
 
   if (error) {
@@ -135,7 +125,7 @@ const Videos = () => {
           <p className="text-red-600 text-center">{error}</p>
         </div>
       </Layout>
-    ); // Show error message
+    );
   }
 
   return (
@@ -159,7 +149,6 @@ const Videos = () => {
           {filteredVideos.length > 0 ? (
             filteredVideos.map((video) => (
               <div key={video.id} className="bg-white p-6 rounded-lg shadow-lg">
-                {/* Video Title (Clickable to toggle visibility) */}
                 <div
                   className="flex justify-between items-center cursor-pointer"
                   onClick={() => toggleVideo(video.id)}
@@ -170,7 +159,6 @@ const Videos = () => {
                   </span>
                 </div>
 
-                {/* Video Player (Visible only if active) */}
                 {activeVideoId === video.id && (
                   <div className="mt-4">
                     <div className="aspect-w-16 aspect-h-9">
@@ -186,7 +174,7 @@ const Videos = () => {
               </div>
             ))
           ) : (
-            <p className="text-gray-600">No videos found.</p>
+            <p className="text-gray-600">No published videos found.</p>
           )}
         </div>
       </div>

@@ -89,6 +89,8 @@ const Exams = () => {
                           ? "bg-yellow-500 text-white"
                           : exam.grade === "D"
                           ? "bg-orange-500 text-white"
+                          : exam.grade === "A*"
+                          ? "bg-green-600 text-white"
                           : "bg-red-500 text-white"
                       }`}
                     >
