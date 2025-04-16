@@ -5,12 +5,12 @@ import { onAuthStateChanged } from "firebase/auth";
 import Layout from "./Layout";
 
 const StudentMeetings = () => {
-  const [meetings, setMeetings] = useState([]);
+  const [allMeetings, setAllMeetings] = useState([]);
   const [enrolledCourse, setEnrolledCourse] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("upcoming"); // 'upcoming' or 'recordings'
+  const [activeTab, setActiveTab] = useState("upcoming");
   const [expandedMeetingId, setExpandedMeetingId] = useState(null);
 
   // Fetch user data and enrolled course
@@ -65,9 +65,9 @@ const StudentMeetings = () => {
           meetingTime: data.meetingTime || "",
           isOnlineMeeting: data.isOnlineMeeting !== false // Default to true
         }));
-        setMeetings(meetingsData);
+        setAllMeetings(meetingsData);
       } else {
-        setMeetings([]);
+        setAllMeetings([]);
       }
       setLoading(false);
     });
@@ -75,16 +75,25 @@ const StudentMeetings = () => {
     return () => unsubscribeMeetings();
   }, [enrolledCourse]);
 
+  // Helper function to check if meeting has ended (2 hours after meeting time)
+  const isMeetingEnded = (meetingTime) => {
+    if (!meetingTime) return true;
+    
+    const now = new Date();
+    const meetingDate = new Date(meetingTime);
+    const twoHoursAfter = new Date(meetingDate.getTime() + 2 * 60 * 60 * 1000);
+    
+    return now > twoHoursAfter;
+  };
+
   // Filter meetings based on active tab and search query
   const filteredMeetings = React.useMemo(() => {
-    const now = new Date().getTime();
-    
-    return meetings.filter(meeting => {
-      // Filter by tab type
-      const isUpcoming = meeting.isOnlineMeeting && 
-                       meeting.meetingTime && 
-                       new Date(meeting.meetingTime).getTime() > now;
-      const matchesTab = activeTab === 'upcoming' ? isUpcoming : !meeting.isOnlineMeeting;
+    return allMeetings.filter(meeting => {
+      // Filter by tab type - keep original tab logic
+      const isOnlineMeeting = meeting.isOnlineMeeting;
+      const isRecording = !meeting.isOnlineMeeting;
+      
+      const matchesTab = activeTab === 'upcoming' ? isOnlineMeeting : isRecording;
       
       // Filter by search query
       const matchesSearch = searchQuery === '' || 
@@ -93,28 +102,26 @@ const StudentMeetings = () => {
       
       return matchesTab && matchesSearch;
     }).sort((a, b) => {
-      // Sort upcoming meetings by time, recordings by reverse chronological order
-      if (activeTab === 'upcoming') {
-        return new Date(a.meetingTime) - new Date(b.meetingTime);
-      } else {
-        return new Date(b.meetingTime) - new Date(a.meetingTime);
-      }
+      // Sort all meetings by time (newest first for recordings)
+      return activeTab === 'upcoming' 
+        ? new Date(a.meetingTime) - new Date(b.meetingTime)
+        : new Date(b.meetingTime) - new Date(a.meetingTime);
     });
-  }, [meetings, activeTab, searchQuery]);
+  }, [allMeetings, activeTab, searchQuery]);
 
   const toggleMeetingDetails = (id) => {
     setExpandedMeetingId(expandedMeetingId === id ? null : id);
   };
 
-  // Helper function to show time until meeting
-  const timeUntilMeeting = (meetingTime) => {
-    if (!meetingTime) return "";
+  // Helper function to show meeting status
+  const getMeetingStatus = (meetingTime) => {
+    if (!meetingTime) return "No time specified";
+    
+    if (isMeetingEnded(meetingTime)) return "Meeting ended";
     
     const now = new Date();
     const meetingDate = new Date(meetingTime);
     const diff = meetingDate - now;
-    
-    if (diff <= 0) return "now";
     
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -170,7 +177,7 @@ const StudentMeetings = () => {
             className={`py-2 px-4 font-medium ${activeTab === 'upcoming' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
             onClick={() => setActiveTab('upcoming')}
           >
-            Upcoming Meetings
+            All Meetings
           </button>
           <button
             className={`py-2 px-4 font-medium ${activeTab === 'recordings' ? 'text-purple-600 border-b-2 border-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
@@ -192,10 +199,11 @@ const StudentMeetings = () => {
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800">{meeting.title}</h3>
                     <p className="text-sm text-gray-600">
-                      {meeting.isOnlineMeeting ? (
-                        `Scheduled: ${new Date(meeting.meetingTime).toLocaleString()}`
-                      ) : (
-                        `Recorded: ${new Date(meeting.meetingTime).toLocaleDateString()}`
+                      {new Date(meeting.meetingTime).toLocaleString()}
+                      {activeTab === 'upcoming' && (
+                        <span className="ml-2 text-gray-500">
+                          ({getMeetingStatus(meeting.meetingTime)})
+                        </span>
                       )}
                     </p>
                   </div>
@@ -209,18 +217,17 @@ const StudentMeetings = () => {
                     {meeting.description && (
                       <p className="text-gray-700 mb-4">{meeting.description}</p>
                     )}
-                    <a
-                      href={meeting.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`inline-block px-4 py-2 rounded-md text-white ${meeting.isOnlineMeeting ? 'bg-blue-600 hover:bg-blue-700' : 'bg-purple-600 hover:bg-purple-700'}`}
-                    >
-                      {meeting.isOnlineMeeting ? 'Join Meeting' : 'Watch Recording'}
-                    </a>
-                    {meeting.isOnlineMeeting && meeting.meetingTime && (
-                      <p className="text-sm text-gray-500 mt-2">
-                        Meeting starts in {timeUntilMeeting(meeting.meetingTime)}
-                      </p>
+                    {meeting.link && (
+                      <a
+                        href={meeting.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`inline-block px-4 py-2 rounded-md text-white ${activeTab === 'upcoming' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-purple-600 hover:bg-purple-700'}`}
+                      >
+                        {activeTab === 'upcoming' 
+                          ? isMeetingEnded(meeting.meetingTime) ? 'View Details' : 'Join Meeting'
+                          : 'Watch Recording'}
+                      </a>
                     )}
                   </div>
                 )}
@@ -230,7 +237,7 @@ const StudentMeetings = () => {
             <div className="text-center py-8">
               <p className="text-gray-500">
                 {activeTab === 'upcoming' 
-                  ? 'No upcoming meetings scheduled' 
+                  ? 'No meetings scheduled' 
                   : 'No recordings available yet'}
               </p>
             </div>

@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { ref, push, onValue, remove } from "firebase/database";
+import { ref, push, onValue, remove, update } from "firebase/database";
 import { db } from "./firebase";
 
 const AdminMarkSchemes = () => {
   // State declarations
   const [markSchemes, setMarkSchemes] = useState({});
   const [courses, setCourses] = useState([]);
-  const [activeCourse, setActiveCourse] = useState("OL"); // Default to OL like UsersManagement
+  const [activeCourse, setActiveCourse] = useState("OL");
   const [chapter, setChapter] = useState("");
   const [pdfName, setPdfName] = useState("");
   const [pdfUrl, setPdfUrl] = useState("");
+  const [isPublished, setIsPublished] = useState(true);
   const [isAddFormExpanded, setIsAddFormExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -48,12 +49,17 @@ const AdminMarkSchemes = () => {
     }
 
     const chapterRef = ref(db, `courses/${activeCourse}/markschemes/${chapter}`);
-    push(chapterRef, { name: pdfName, url: pdfUrl })
+    push(chapterRef, { 
+      name: pdfName, 
+      url: pdfUrl,
+      published: isPublished
+    })
       .then(() => {
         alert("Mark scheme added successfully");
         setChapter("");
         setPdfName("");
         setPdfUrl("");
+        setIsPublished(true);
         setIsAddFormExpanded(false);
       })
       .catch(error => alert("Error adding mark scheme: " + error.message));
@@ -67,6 +73,13 @@ const AdminMarkSchemes = () => {
         .then(() => alert("Mark scheme deleted successfully"))
         .catch(error => alert("Error deleting mark scheme: " + error.message));
     }
+  };
+
+  // Toggle publish status - CORRECTED VERSION
+  const togglePublishStatus = (chapter, pdfKey, currentStatus) => {
+    const pdfRef = ref(db, `courses/${activeCourse}/markschemes/${chapter}/${pdfKey}`);
+    update(pdfRef, { published: !currentStatus })
+      .catch(error => alert("Error updating publish status: " + error.message));
   };
 
   // Filter mark schemes based on search query
@@ -162,6 +175,17 @@ const AdminMarkSchemes = () => {
                 required
               />
             </div>
+            <div>
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={isPublished}
+                  onChange={(e) => setIsPublished(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 rounded"
+                />
+                <span className="text-sm font-medium">Publish to students</span>
+              </label>
+            </div>
           </div>
           <div className="mt-4 flex justify-end space-x-2">
             <button
@@ -189,24 +213,40 @@ const AdminMarkSchemes = () => {
                 <h3 className="text-lg font-semibold mb-3">{chapterName}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {Object.entries(pdfs).map(([pdfKey, pdf]) => (
-                    <div key={pdfKey} className="border rounded-md p-3 flex justify-between items-center hover:bg-gray-50">
-                      <a
-                        href={pdf.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline flex-1"
-                      >
-                        {pdf.name}
-                      </a>
-                      <button
-                        onClick={() => handleDeletePdf(chapterName, pdfKey)}
-                        className="text-red-600 hover:text-red-800 ml-2 p-1"
-                        title="Delete"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                        </svg>
-                      </button>
+                    <div key={pdfKey} className="border rounded-md p-3 flex flex-col hover:bg-gray-50">
+                      <div className="flex justify-between items-start mb-2">
+                        <a
+                          href={pdf.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline flex-1"
+                        >
+                          {pdf.name}
+                        </a>
+                        <div className="flex space-x-2">
+                          <label className="flex items-center space-x-1">
+                            <input
+                              type="checkbox"
+                              checked={pdf.published !== false}
+                              onChange={() => togglePublishStatus(chapterName, pdfKey, pdf.published !== false)}
+                              className="h-4 w-4 text-blue-600 rounded"
+                            />
+                            <span className="text-xs text-gray-600">Published</span>
+                          </label>
+                          <button
+                            onClick={() => handleDeletePdf(chapterName, pdfKey)}
+                            className="text-red-600 hover:text-red-800 p-1"
+                            title="Delete"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      {pdf.published === false && (
+                        <span className="text-xs text-red-600 mt-1">(Hidden from students)</span>
+                      )}
                     </div>
                   ))}
                 </div>

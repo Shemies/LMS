@@ -40,6 +40,7 @@ const AdminLayout = () => {
         <ul className="space-y-3">
           {[
             { name: "Dashboard", path: "/admin/dashboard", icon: <LayoutDashboard size={18} /> },
+            { name: "Courses", path: "/admin/courses", icon: <FileArchive size={18} /> },
             { name: "Users", path: "/admin/users", icon: <Users size={18} /> },
             { name: "Chapters", path: "/admin/chapters", icon: <BookOpen size={18} /> },
             { name: "Videos", path: "/admin/videos", icon: <Video size={18} /> },

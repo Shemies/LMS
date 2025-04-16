@@ -118,10 +118,10 @@ const AdminHomeworks = () => {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-start md:items-center mb-8 gap-4">
+        <div className="items-start md:items-center mb-8 gap-4">
           <h1 className="text-2xl md:text-3xl font-bold text-white">Homework Management</h1>
           
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap mt-4 gap-2">
             {courses.map(course => (
               <button
                 key={course}

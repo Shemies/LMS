@@ -9,31 +9,27 @@ const MarkSchemes = () => {
   const [enrolledCourse, setEnrolledCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeChapter, setActiveChapter] = useState(null); // Track the currently active chapter
+  const [activeChapter, setActiveChapter] = useState(null);
 
   useEffect(() => {
-    // Listen for authentication state changes
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
-        console.log("User is authenticated:", user.email); // Debugging
+        console.log("User is authenticated:", user.email);
 
-        // Fetch all users to find the one matching the authenticated user
         const usersRef = ref(db, "users");
         const unsubscribeUsers = onValue(
           usersRef,
           (snapshot) => {
             if (snapshot.exists()) {
               const usersData = snapshot.val();
-
-              // Find the user with the matching email (or other unique identifier)
               const authenticatedUser = Object.values(usersData).find(
                 (u) => u.email === user.email
               );
 
               if (authenticatedUser) {
-                console.log("Authenticated user data:", authenticatedUser); // Debugging
+                console.log("Authenticated user data:", authenticatedUser);
                 if (authenticatedUser.enrolledCourse) {
-                  setEnrolledCourse(authenticatedUser.enrolledCourse); // Set enrolled course
+                  setEnrolledCourse(authenticatedUser.enrolledCourse);
                 } else {
                   setError("No enrolled course found. Please enroll in a course.");
                 }
@@ -52,30 +48,43 @@ const MarkSchemes = () => {
           }
         );
 
-        return () => unsubscribeUsers(); // Cleanup users listener
+        return () => unsubscribeUsers();
       } else {
         setError("User not authenticated. Please log in.");
         setLoading(false);
       }
     });
 
-    return () => unsubscribeAuth(); // Cleanup auth listener
+    return () => unsubscribeAuth();
   }, []);
 
   useEffect(() => {
-    if (!enrolledCourse) return; // Exit if no enrolled course
+    if (!enrolledCourse) return;
 
-    // Fetch mark schemes for the enrolled course
     const markSchemesRef = ref(db, `courses/${enrolledCourse}/markschemes`);
     const unsubscribeMarkSchemes = onValue(
       markSchemesRef,
       (snapshot) => {
         if (snapshot.exists()) {
-          console.log("Mark schemes data:", snapshot.val()); // Debugging
-          setMarkSchemes(snapshot.val());
+          const markSchemesData = snapshot.val();
+          const filteredMarkSchemes = {};
+          
+          Object.entries(markSchemesData).forEach(([chapter, pdfs]) => {
+            // Convert pdfs to array and filter published items
+            const pdfArray = Object.values(pdfs).filter(
+              pdf => pdf.published !== false
+            );
+            
+            if (pdfArray.length > 0) {
+              filteredMarkSchemes[chapter] = pdfArray; // Store as array
+            }
+          });
+
+          console.log("Filtered mark schemes:", filteredMarkSchemes);
+          setMarkSchemes(filteredMarkSchemes);
         } else {
-          console.log("No mark schemes found for the enrolled course."); // Debugging
-          setMarkSchemes([]);
+          console.log("No mark schemes found for the enrolled course.");
+          setMarkSchemes({});
           setError("No mark schemes found for the enrolled course.");
         }
         setLoading(false);
@@ -87,15 +96,14 @@ const MarkSchemes = () => {
       }
     );
 
-    return () => unsubscribeMarkSchemes(); // Cleanup mark schemes listener
-  }, [enrolledCourse]); // Re-fetch when enrolledCourse changes
+    return () => unsubscribeMarkSchemes();
+  }, [enrolledCourse]);
 
-  // Toggle chapter visibility
   const toggleChapter = (chapter) => {
     if (activeChapter === chapter) {
-      setActiveChapter(null); // Close the chapter if it's already open
+      setActiveChapter(null);
     } else {
-      setActiveChapter(chapter); // Open the clicked chapter
+      setActiveChapter(chapter);
     }
   };
 
@@ -106,7 +114,7 @@ const MarkSchemes = () => {
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
         </div>
       </Layout>
-    ); // Show loading spinner
+    );
   }
 
   if (error) {
@@ -116,7 +124,7 @@ const MarkSchemes = () => {
           <p className="text-red-600 text-center">{error}</p>
         </div>
       </Layout>
-    ); // Show error message
+    );
   }
 
   return (
@@ -127,43 +135,36 @@ const MarkSchemes = () => {
         <h3 className="text-lg font-semibold mb-4 text-[#0F172A]">Chapters</h3>
 
         {Object.keys(markSchemes).length > 0 ? (
-          Object.entries(markSchemes).map(([chapter, pdfs]) => {
-            // Convert pdfs object to an array if it's not already an array
-            const pdfList = Array.isArray(pdfs) ? pdfs : Object.values(pdfs);
-
-            return (
-              <div key={chapter} className="mb-6">
-                {/* Chapter Title (Clickable to toggle visibility) */}
-                <div
-                  className="flex justify-between items-center cursor-pointer"
-                  onClick={() => toggleChapter(chapter)}
-                >
-                  <h4 className="text-md font-bold text-[#1E293B]">{chapter}</h4>
-                  <span className="text-gray-600">
-                    {activeChapter === chapter ? "▲" : "▼"}
-                  </span>
-                </div>
-
-                {/* PDF List (Visible only if active) */}
-                {activeChapter === chapter && (
-                  <ul className="space-y-2 mt-2">
-                    {pdfList.map((pdf, index) => (
-                      <li key={index} className="p-3 bg-gray-100 rounded-lg">
-                        <a
-                          href={pdf.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline"
-                        >
-                          {pdf.name}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+          Object.entries(markSchemes).map(([chapter, pdfs]) => (
+            <div key={chapter} className="mb-6">
+              <div
+                className="flex justify-between items-center cursor-pointer"
+                onClick={() => toggleChapter(chapter)}
+              >
+                <h4 className="text-md font-bold text-[#1E293B]">{chapter}</h4>
+                <span className="text-gray-600">
+                  {activeChapter === chapter ? "▲" : "▼"}
+                </span>
               </div>
-            );
-          })
+
+              {activeChapter === chapter && (
+                <ul className="space-y-2 mt-2">
+                  {pdfs.map((pdf, index) => (
+                    <li key={index} className="p-3 bg-gray-100 rounded-lg">
+                      <a
+                        href={pdf.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        {pdf.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))
         ) : (
           <p className="text-gray-500">
             No mark schemes available for the enrolled course. Please check back later.

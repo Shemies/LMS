@@ -33,6 +33,7 @@ import AssistantLayout from "./AssistantLayout";
 import AssistantDashboard from "./AssistantDashboard";
 import AdminMeetings from "./AdminMeetings";
 import StudentMeetings from "./StudentMeetings";
+import CoursesManagement from "./CoursesManagement";
 
 function App() {
   return (
@@ -69,6 +70,7 @@ function App() {
             }>
               <Route index element={<AdminDashboard />} />
               <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="courses" element={<CoursesManagement />} />
               <Route path="users" element={<UsersManagement />} />
               <Route path="chapters" element={<AdminChapters />} />
               <Route path="videos" element={<AdminVideos />} />

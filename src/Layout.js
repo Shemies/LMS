@@ -13,11 +13,20 @@ import {
   LogOut,
   Home,
   BookText,
-  CalendarCheck
+  CalendarCheck,
+  Video,
+  FileText,
+  FileArchive,
+  Users,
+  FileBox,
+  GraduationCap,
+  CalendarDays,
+  MessageCircle
 } from "lucide-react";
 import logo from "./assets/lms-logo.png";
 import { auth, db, ref, onValue, query, orderByChild, equalTo } from "./firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
+import { FaWhatsapp } from "react-icons/fa";
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -68,18 +77,23 @@ const Layout = ({ children }) => {
     }
   };
 
+  const openWhatsAppChat = () => {
+    const phoneNumber = "201004672283";
+    const message = "Hello, I have a question about the LMS system.";
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, "_blank");
+  };
+
   // Updated navigation items with better matching icons
   const navItems = [
     { name: "Dashboard", path: "/dashboard", icon: <LayoutDashboard size={20} /> },
-    { name: "Chapters", path: "/chapters", icon: <BookMarked size={20} /> },
-    { name: "Videos", path: "/videos", icon: <PlaySquare size={20} /> },
-    { name: "Mark Schemes", path: "/markschemes", icon: <FileCheck size={20} /> },
-    { name: "Homework", path: "/homeworks", icon: <CalendarCheck size={20} /> },
-    { name: "Exams Grades", path: "/exams", icon: <BookOpenCheck size={20} /> },
-    { name: "Past Papers", path: "/pastpapers", icon: <FileSearch size={20} /> },
-    { name: "Online Meetings", path: "/online-meetings", icon: <FileSearch size={20} /> },
-
-    // { name: "Homework Status", path: "/homework_track", icon: <ClipboardCheck size={20} /> },
+    { name: "Chapters", path: "/chapters", icon: <BookText size={20} /> }, // Changed to BookText for content chapters
+    { name: "Videos", path: "/videos", icon: <Video size={20} /> }, // Changed to Video for better representation
+    { name: "Mark Schemes", path: "/markschemes", icon: <FileCheck size={20} /> }, // Kept as it's appropriate
+    { name: "Homework", path: "/homeworks", icon: <CalendarDays size={20} /> }, // Changed to CalendarDays for deadlines
+    { name: "Exams Grades", path: "/exams", icon: <GraduationCap size={20} /> }, // Changed to GraduationCap for exams
+    { name: "Past Papers", path: "/pastpapers", icon: <FileArchive size={20} /> }, // Changed to FileArchive for past papers
+    { name: "Online Meetings", path: "/online-meetings", icon: <Users size={20} /> }, // Changed to Users for meetings
   ];
 
   return (
@@ -154,6 +168,15 @@ const Layout = ({ children }) => {
 
         {/* Page Content */}
         <div className="p-6 mt-6 bg-gray-200 min-h-screen pt-16">{children}</div>
+      </div>
+
+      {/* Floating WhatsApp Button */}
+      <div 
+        className="fixed bottom-6 right-6 bg-green-500 text-white p-4 rounded-full shadow-lg cursor-pointer hover:bg-green-600 transition-colors duration-300 z-50"
+        onClick={openWhatsAppChat}
+        title="Chat with us on WhatsApp"
+      >
+        <FaWhatsapp size={28} />
       </div>
     </div>
   );

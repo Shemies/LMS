@@ -1,16 +1,17 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import Navbar from "./Navbar"; // Import the Navbar component
-import Footer from "./Footer"; // Import the Footer component
-import { Swiper, SwiperSlide } from "swiper/react"; // Import Swiper components
-import { Autoplay, Pagination, Navigation } from "swiper/modules"; // Import Swiper modules
-import "swiper/css"; // Import Swiper styles
-import "swiper/css/pagination"; // Import Swiper pagination styles
-import "swiper/css/navigation"; // Import Swiper navigation styles
+import Navbar from "./Navbar";
+import Footer from "./Footer";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, Pagination, Navigation } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/pagination";
+import "swiper/css/navigation";
+import { FaWhatsapp } from "react-icons/fa";
 
 // Import images for the carousel
-import teamImage from "./20944338.jpg"; // Hero image
-import teamImage1 from "./assets/team1.png"; // Replace with your image paths
+import teamImage from "./20944338.jpg";
+import teamImage1 from "./assets/team1.png";
 import teamImage2 from "./assets/team2.png";
 import teamImage3 from "./assets/team3.png";
 import teamImage4 from "./assets/team4.png";
@@ -19,8 +20,15 @@ import teamImage6 from "./assets/team6.png";
 import teamImage7 from "./assets/team7.png";
 
 const LandingPage = () => {
+  const openWhatsAppChat = () => {
+    const phoneNumber = "201004672283";
+    const message = "Hello, I'm interested in learning more about your Math IGCSE courses.";
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, "_blank");
+  };
+
   return (
-    <div className="font-sans bg-gray-50 text-gray-900">
+    <div className="font-sans bg-gray-50 text-gray-900 relative">
       {/* Navbar */}
       <Navbar />
 
@@ -50,7 +58,7 @@ const LandingPage = () => {
             <img
               src={teamImage}
               alt="Team Graphic"
-              className="w-full max-w-md "
+              className="w-full max-w-md"
             />
           </div>
         </div>
@@ -188,7 +196,7 @@ const LandingPage = () => {
             spaceBetween={30}
             centeredSlides={true}
             autoplay={{
-              delay: 3000, // Auto-switch every 3 seconds
+              delay: 3000,
               disableOnInteraction: false,
             }}
             pagination={{
@@ -198,7 +206,6 @@ const LandingPage = () => {
             modules={[Autoplay, Pagination, Navigation]}
             className="w-full"
           >
-            {/* Slide 1 */}
             <SwiperSlide>
               <img
                 src={teamImage1}
@@ -206,7 +213,6 @@ const LandingPage = () => {
                 className="w-full h-full object-cover rounded-lg shadow-lg"
               />
             </SwiperSlide>
-            {/* Slide 2 */}
             <SwiperSlide>
               <img
                 src={teamImage2}
@@ -214,7 +220,6 @@ const LandingPage = () => {
                 className="w-full h-full object-cover rounded-lg shadow-lg"
               />
             </SwiperSlide>
-            {/* Slide 3 */}
             <SwiperSlide>
               <img
                 src={teamImage3}
@@ -222,7 +227,6 @@ const LandingPage = () => {
                 className="w-full h-full object-cover rounded-lg shadow-lg"
               />
             </SwiperSlide>
-            {/* Slide 4 */}
             <SwiperSlide>
               <img
                 src={teamImage4}
@@ -230,7 +234,6 @@ const LandingPage = () => {
                 className="w-full h-full object-cover rounded-lg shadow-lg"
               />
             </SwiperSlide>
-            {/* Slide 5 */}
             <SwiperSlide>
               <img
                 src={teamImage5}
@@ -238,7 +241,6 @@ const LandingPage = () => {
                 className="w-full h-full object-cover rounded-lg shadow-lg"
               />
             </SwiperSlide>
-            {/* Slide 6 */}
             <SwiperSlide>
               <img
                 src={teamImage6}
@@ -246,7 +248,6 @@ const LandingPage = () => {
                 className="w-full h-full object-cover rounded-lg shadow-lg"
               />
             </SwiperSlide>
-            {/* Slide 7 */}
             <SwiperSlide>
               <img
                 src={teamImage7}
@@ -260,6 +261,15 @@ const LandingPage = () => {
 
       {/* Footer */}
       <Footer />
+
+      {/* Floating WhatsApp Button */}
+      <div 
+        className="fixed bottom-6 right-6 bg-green-500 text-white p-4 rounded-full shadow-lg cursor-pointer hover:bg-green-600 transition-colors duration-300 z-50"
+        onClick={openWhatsAppChat}
+        title="Chat with us on WhatsApp"
+      >
+        <FaWhatsapp size={28} />
+      </div>
     </div>
   );
 };
